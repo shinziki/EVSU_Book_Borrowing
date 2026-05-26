@@ -1,4 +1,4 @@
-# Coffee Prince Library Management System
+# EVSU Book Borrowing System
 
 A barcode-based library management system for Coffee Prince Library.
 
@@ -114,9 +114,4 @@ This feature is especially useful for:
 The Coffee Prince Library Management System was developed by:
 
 - Miguelito Bacho
-- Nicole Cretecio
-- Raziel Insigne
-- Ariel Cupta
-- Jhonel Andamon
-- Gabriel Valmera
-- Regine Pales 
+- Sherwin Dave Osma
