@@ -1,0 +1,99 @@
+2025-06-05 12:46:32 - Starting to send borrowing email to: freaxzaldy@gmail.com
+2025-06-05 12:46:36 - Port 465/SSL attempt debug output:
+2025-06-05 10:46:33 SERVER -&gt; CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-313319d4523sm1076978a91.27 - gsmtp<br>
+2025-06-05 10:46:33 CLIENT -&gt; SERVER: EHLO localhost<br>
+2025-06-05 10:46:33 SERVER -&gt; CLIENT: 250-smtp.gmail.com at your service, [38.225.216.8]250-SIZE 35882577250-8BITMIME250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH250-ENHANCEDSTATUSCODES250-PIPELINING250-CHUNKING250 SMTPUTF8<br>
+2025-06-05 10:46:33 CLIENT -&gt; SERVER: AUTH LOGIN<br>
+2025-06-05 10:46:34 SERVER -&gt; CLIENT: 334 VXNlcm5hbWU6<br>
+2025-06-05 10:46:34 CLIENT -&gt; SERVER: [credentials hidden]<br>
+2025-06-05 10:46:34 SERVER -&gt; CLIENT: 334 UGFzc3dvcmQ6<br>
+2025-06-05 10:46:34 CLIENT -&gt; SERVER: [credentials hidden]<br>
+2025-06-05 10:46:34 SERVER -&gt; CLIENT: 235 2.7.0 Accepted<br>
+2025-06-05 10:46:34 CLIENT -&gt; SERVER: MAIL FROM:&lt;migsbacho04@gmail.com&gt;<br>
+2025-06-05 10:46:35 SERVER -&gt; CLIENT: 250 2.1.0 OK 98e67ed59e1d1-313319d4523sm1076978a91.27 - gsmtp<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: RCPT TO:&lt;freaxzaldy@gmail.com&gt;<br>
+2025-06-05 10:46:35 SERVER -&gt; CLIENT: 250 2.1.5 OK 98e67ed59e1d1-313319d4523sm1076978a91.27 - gsmtp<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: DATA<br>
+2025-06-05 10:46:35 SERVER -&gt; CLIENT: 354 Go ahead 98e67ed59e1d1-313319d4523sm1076978a91.27 - gsmtp<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Date: Thu, 5 Jun 2025 12:46:32 +0200<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: To: freaxzaldy@gmail.com<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: From: Coffee Prince Library &lt;migsbacho04@gmail.com&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Reply-To: Coffee Prince Library &lt;migsbacho04@gmail.com&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Subject: Book Borrowed Confirmation - Coffee Prince Library<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Message-ID: &lt;1iOdJxq5ilPp8zQIlHofTg9GsayIHZikHh4A4meI@localhost&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: X-Mailer: PHPMailer 6.10.0 (https://github.com/PHPMailer/PHPMailer)<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: MIME-Version: 1.0<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Content-Type: multipart/alternative;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:  boundary=&quot;b1=_1iOdJxq5ilPp8zQIlHofTg9GsayIHZikHh4A4meI&quot;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Content-Transfer-Encoding: 8bit<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: --b1=_1iOdJxq5ilPp8zQIlHofTg9GsayIHZikHh4A4meI<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Content-Type: text/plain; charset=iso-8859-1<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Content-Transfer-Encoding: 8bit<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Dear Zaldy Siago,<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: You have borrowed the following book from Coffee Prince Library:<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Title: The Subtle Art of Not Giving a Fuck<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Author: Mark Manson<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Borrow Date: June 5, 2025<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Due Date: June 6, 2025<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Payment Amount: ₱10.00<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Please return the book on or before the due date to avoid penalties.<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Late returns incur a penalty of 3x the original borrowing fee.<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Thank you for using Coffee Prince Library!<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: --b1=_1iOdJxq5ilPp8zQIlHofTg9GsayIHZikHh4A4meI<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Content-Type: text/html; charset=iso-8859-1<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: Content-Transfer-Encoding: 8bit<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: &lt;!DOCTYPE html&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: &lt;html&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: &lt;head&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:     &lt;style&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:         body { font-family: Arial, sans-serif; color: #333; line-height: 1.5; }<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:         .container { max-width: 600px; margin: 0 auto; }<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:         .header { text-align: center; margin-bottom: 20px; }<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:         .section { margin-bottom: 20px; }<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:         .info-box { background-color: #f9f9f9; padding: 10px; border-radius: 4px; }<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:     &lt;/style&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: &lt;/head&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: &lt;body&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:     &lt;div class=&#039;container&#039;&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:         &lt;div class=&#039;header&#039;&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             &lt;h1&gt;Coffee Prince Library&lt;/h1&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             &lt;p&gt;Book Borrowed Confirmation&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:         &lt;/div&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:         <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:         &lt;div class=&#039;section&#039;&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             &lt;p&gt;Dear Zaldy Siago,&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             &lt;p&gt;You have borrowed the following book from Coffee Prince Library:&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             &lt;div class=&#039;info-box&#039;&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:                 &lt;p&gt;&lt;strong&gt;Title:&lt;/strong&gt; The Subtle Art of Not Giving a Fuck&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:                 &lt;p&gt;&lt;strong&gt;Author:&lt;/strong&gt; Mark Manson&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:                 &lt;p&gt;&lt;strong&gt;Borrow Date:&lt;/strong&gt; June 5, 2025&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:                 &lt;p&gt;&lt;strong&gt;Due Date:&lt;/strong&gt; June 6, 2025&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:                 &lt;p&gt;&lt;strong&gt;Payment Amount:&lt;/strong&gt; ₱10.00&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             &lt;/div&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             &lt;p&gt;Please return the book on or before the due date to avoid penalties.&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             &lt;p&gt;Late returns incur a penalty of 3x the original borrowing fee.&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:             &lt;p&gt;Thank you for using Coffee Prince Library!&lt;/p&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:         &lt;/div&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER:     &lt;/div&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: &lt;/body&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: &lt;/html&gt;<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: --b1=_1iOdJxq5ilPp8zQIlHofTg9GsayIHZikHh4A4meI--<br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: <br>
+2025-06-05 10:46:35 CLIENT -&gt; SERVER: .<br>
+2025-06-05 10:46:36 SERVER -&gt; CLIENT: 250 2.0.0 OK  1749120396 98e67ed59e1d1-313319d4523sm1076978a91.27 - gsmtp<br>
+2025-06-05 10:46:36 CLIENT -&gt; SERVER: QUIT<br>
+2025-06-05 10:46:36 SERVER -&gt; CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-313319d4523sm1076978a91.27 - gsmtp<br>
+
+2025-06-05 12:46:36 - Port 465/SSL result: SUCCESS

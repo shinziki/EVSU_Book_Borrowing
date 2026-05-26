@@ -1,0 +1,9 @@
+To: miguelito.bacho@evsu.edu.ph
+From: Coffee Prince Library <noreply@coffeeprincelibrary.com>
+Subject: Test Email from Coffee Prince Library
+Date: 2025-06-05 04:43:27
+-------------------------------------------
+This is a test email from Coffee Prince Library to verify email delivery is working correctly.
+
+Time sent: 2025-06-05 04:43:27
+If you received this email, your email system is configured correctly.

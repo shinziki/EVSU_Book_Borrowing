@@ -1,0 +1,6 @@
+2026-05-21 14:52:02 - Processing borrowing receipt email for transaction ID: 47
+2026-05-21 14:52:02 - Attempting to send email to: regine.pales@evsu.edu.ph using direct method
+2026-05-21 14:52:02 - Starting to send borrowing email to: regine.pales@evsu.edu.ph
+2026-05-21 14:52:07 - PHPMailer Exception: SMTP Error: Could not authenticate.
+2026-05-21 14:52:07 - Direct email result: FAILED
+2026-05-21 14:52:07 - Borrowing receipt email process complete for transaction ID: 47 - Status: FAILED

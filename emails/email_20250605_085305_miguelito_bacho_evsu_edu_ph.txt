@@ -1,0 +1,32 @@
+To: miguelito.bacho@evsu.edu.ph
+From: Coffee Prince Library <noreply@coffeeprincelibrary.com>
+Subject: Coffee Prince Library - Book Borrowing Receipt
+Date: 2025-06-05 08:53:05
+-------------------------------------------
+Dear Miguelito Bacho,
+
+Thank you for borrowing from Coffee Prince Library. Here are your borrowing details:
+
+TRANSACTION DETAILS
+Transaction ID: TRX9
+Date Borrowed: June 5, 2025, 2:53 PM
+Due Date: June 10, 2025
+
+BOOK DETAILS
+Title: The Subtle Art of Not Giving a Fuck
+Author: Mark Manson
+Barcode: 9780062641540
+
+BORROWER DETAILS
+Name: Miguelito Bacho
+Member ID: MEM2005
+
+PAYMENT DETAILS
+Borrowing Fee: ₱30.00
+
+IMPORTANT NOTES
+- Please return the book on or before the due date.
+- Late returns will incur a penalty fee of 3x the original borrowing fee.
+- Please handle library materials with care.
+
+Thank you for using Coffee Prince Library!

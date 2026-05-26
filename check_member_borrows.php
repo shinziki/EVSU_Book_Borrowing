@@ -1,0 +1,75 @@
+<?php
+require_once 'config/db_connect.php';
+require_once 'config/functions.php';
+
+// Require login to access this endpoint
+requireLogin();
+
+// Initialize response
+$response = [
+    'success' => false,
+    'message' => '',
+    'active_borrows' => 0,
+    'borrow_limit' => 3,
+    'member_name' => '',
+    'membership_type' => '',
+    'borrowed_books' => []
+];
+
+// Check if member barcode is provided
+if (isset($_GET['barcode']) && !empty($_GET['barcode'])) {
+    $memberBarcode = $_GET['barcode'];
+    
+    // Get member details
+    $memberInfo = getMemberByBarcode($memberBarcode);
+    
+    if ($memberInfo) {
+        // Get borrow limit based on membership type
+        $borrowLimit = $memberInfo['membership_type'] == 'Premium' ? 5 : 3;
+        
+        // Get active borrows count
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) as active_borrows 
+            FROM transactions 
+            WHERE member_id = :member_id 
+            AND status IN ('Borrowed', 'Overdue')
+        ");
+        $stmt->bindParam(':member_id', $memberInfo['id']);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        
+        $activeBorrows = $result ? (int)$result['active_borrows'] : 0;
+        
+        // Get borrowed books details
+        $stmt = $pdo->prepare("
+            SELECT t.id, t.borrow_date, t.due_date, t.status,
+                   b.title as book_title
+            FROM transactions t
+            JOIN books b ON t.book_id = b.id
+            WHERE t.member_id = :member_id
+            AND t.status IN ('Borrowed', 'Overdue')
+            ORDER BY t.due_date ASC
+        ");
+        $stmt->bindParam(':member_id', $memberInfo['id']);
+        $stmt->execute();
+        $borrowedBooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Update response with member information
+        $response['success'] = true;
+        $response['member_name'] = $memberInfo['fullname'];
+        $response['membership_type'] = $memberInfo['membership_type'];
+        $response['active_borrows'] = $activeBorrows;
+        $response['borrowed_books'] = $borrowedBooks;
+        
+        $response['message'] = "Member has ${activeBorrows} active borrows";
+    } else {
+        $response['message'] = "Member not found with barcode: $memberBarcode";
+    }
+} else {
+    $response['message'] = "No member barcode provided";
+}
+
+// Return JSON response
+header('Content-Type: application/json');
+echo json_encode($response);
+?> 

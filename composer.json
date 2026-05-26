@@ -1,0 +1,13 @@
+{
+    "name": "coffee-prince/library",
+    "description": "Coffee Prince Library Management System",
+    "type": "project",
+    "require": {
+        "phpmailer/phpmailer": "^6.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "CoffeePrince\\": "src/"
+        }
+    }
+} 

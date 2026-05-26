@@ -1,0 +1,19 @@
+To: freaxzaldy@gmail.com
+From: Coffee Prince Library <noreply@coffeeprincelibrary.com>
+Subject: Book Borrowed Confirmation - Coffee Prince Library
+Headers: From: Coffee Prince Library <noreply@coffeeprincelibrary.com>
+Content-Type: text/plain; charset=UTF-8
+
+Date: 2025-06-05 10:38:39
+-------------------------------------------
+Dear Zaldy Siago,
+
+You have borrowed the book 'Everything is Fucked!' from Coffee Prince Library.
+
+Borrow date: June 5, 2025
+Due date: June 8, 2025
+
+Please return the book on or before the due date to avoid penalties.
+Late returns incur a penalty of 3x the original borrowing fee.
+
+Thank you for using Coffee Prince Library!

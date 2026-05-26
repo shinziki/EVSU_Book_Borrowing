@@ -1,0 +1,15 @@
+To: migsbacho04@gmail.com
+Subject: Your Login OTP Code - Coffee Prince Library
+Headers: 
+Date: 2025-06-04 20:06:06
+-------------------------------------------
+Hello admin,
+
+Your new OTP code for login is: 399758
+
+This code will expire in 15 minutes.
+
+If you did not request this code, please ignore this email.
+
+Thank you,
+Coffee Prince Library

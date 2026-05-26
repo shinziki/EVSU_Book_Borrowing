@@ -1,0 +1,17 @@
+To: michael@example.com
+From: Coffee Prince Library <noreply@coffeeprincelibrary.com>
+Subject: OVERDUE BOOK NOTICE - Coffee Prince Library
+Headers: From: Coffee Prince Library <noreply@coffeeprincelibrary.com>
+Content-Type: text/plain; charset=UTF-8
+
+Date: 2025-06-05 14:08:38
+-------------------------------------------
+Dear Michael Brown,
+
+The book 'The Hobbit' is OVERDUE.
+Due date was: May 29, 2025
+Penalty amount: 0.00 pesos
+
+Please return the book as soon as possible and settle the penalty.
+
+Thank you for your cooperation.

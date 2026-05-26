@@ -1,0 +1,177 @@
+2025-06-05 17:32:43 - Processing borrowing receipt email for transaction ID: 29
+2025-06-05 17:32:43 - Attempting to send email to: gabriel.valmera@evsu.edu.ph using direct method
+2025-06-05 17:32:43 - Starting to send borrowing email to: gabriel.valmera@evsu.edu.ph
+2025-06-05 17:32:46 - Port 465/SSL attempt debug output:
+2025-06-05 15:32:44 SERVER -&gt; CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-23506cf39e1sm121126025ad.160 - gsmtp<br>
+2025-06-05 15:32:44 CLIENT -&gt; SERVER: EHLO localhost<br>
+2025-06-05 15:32:44 SERVER -&gt; CLIENT: 250-smtp.gmail.com at your service, [38.225.216.8]250-SIZE 35882577250-8BITMIME250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH250-ENHANCEDSTATUSCODES250-PIPELINING250-CHUNKING250 SMTPUTF8<br>
+2025-06-05 15:32:44 CLIENT -&gt; SERVER: AUTH LOGIN<br>
+2025-06-05 15:32:44 SERVER -&gt; CLIENT: 334 VXNlcm5hbWU6<br>
+2025-06-05 15:32:44 CLIENT -&gt; SERVER: [credentials hidden]<br>
+2025-06-05 15:32:44 SERVER -&gt; CLIENT: 334 UGFzc3dvcmQ6<br>
+2025-06-05 15:32:44 CLIENT -&gt; SERVER: [credentials hidden]<br>
+2025-06-05 15:32:45 SERVER -&gt; CLIENT: 235 2.7.0 Accepted<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: MAIL FROM:&lt;migsbacho04@gmail.com&gt;<br>
+2025-06-05 15:32:45 SERVER -&gt; CLIENT: 250 2.1.0 OK d9443c01a7336-23506cf39e1sm121126025ad.160 - gsmtp<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: RCPT TO:&lt;gabriel.valmera@evsu.edu.ph&gt;<br>
+2025-06-05 15:32:45 SERVER -&gt; CLIENT: 250 2.1.5 OK d9443c01a7336-23506cf39e1sm121126025ad.160 - gsmtp<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: DATA<br>
+2025-06-05 15:32:45 SERVER -&gt; CLIENT: 354 Go ahead d9443c01a7336-23506cf39e1sm121126025ad.160 - gsmtp<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Date: Thu, 5 Jun 2025 17:32:43 +0200<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: To: gabriel.valmera@evsu.edu.ph<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: From: Coffee Prince Library &lt;migsbacho04@gmail.com&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Reply-To: Coffee Prince Library &lt;migsbacho04@gmail.com&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Subject: Coffee Prince Library - Borrowing Receipt #29<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Message-ID: &lt;2u5ELkvecFmP2qNBOSHBLCqCiywcvvUUXgFAc2svUqE@localhost&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: X-Mailer: PHPMailer 6.10.0 (https://github.com/PHPMailer/PHPMailer)<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: MIME-Version: 1.0<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Content-Type: multipart/alternative;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:  boundary=&quot;b1=_2u5ELkvecFmP2qNBOSHBLCqCiywcvvUUXgFAc2svUqE&quot;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Content-Transfer-Encoding: 8bit<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: --b1=_2u5ELkvecFmP2qNBOSHBLCqCiywcvvUUXgFAc2svUqE<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Content-Type: text/plain; charset=iso-8859-1<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Content-Transfer-Encoding: 8bit<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: COFFEE PRINCE LIBRARY - BORROWING RECEIPT<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Transaction #29<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: DATE BORROWED: June 5, 2025, 11:32 PM<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: DUE DATE: June 19, 2025<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: BOOK DETAILS:<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Title: The Subtle Art of Not Giving a Fuck<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Author: Mark Manson<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Barcode: 9780062641540<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: BORROWER DETAILS:<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Name: Gabriel Valmera<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Member ID: MEM2010<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: PAYMENT DETAILS:<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Borrowing Fee: ₱50.00<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Total: ₱50.00<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: IMPORTANT NOTES:<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: - Please return the book on or before the due date.<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: - Late returns will incur a penalty fee of 3x the original borrowing fee.<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: - Please handle library materials with care.<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: - For any inquiries, please contact the library staff.<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: - Important: Please bring this receipt when returning the book.<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Thank you for using Coffee Prince Library!<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: This receipt was generated on 2025-06-05 17:32:43<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: --b1=_2u5ELkvecFmP2qNBOSHBLCqCiywcvvUUXgFAc2svUqE<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Content-Type: text/html; charset=iso-8859-1<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: Content-Transfer-Encoding: 8bit<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: &lt;!DOCTYPE html&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: &lt;html&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: &lt;head&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:     &lt;style&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         body { font-family: Arial, sans-serif; color: #333; line-height: 1.5; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .container { max-width: 600px; margin: 0 auto; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .header { text-align: center; margin-bottom: 20px; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .header h1 { margin-bottom: 5px; color: #333; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .section { margin-bottom: 20px; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .section h3 { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .info-box { background-color: #f9f9f9; padding: 10px; border-radius: 4px; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .table { width: 100%; border-collapse: collapse; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .table td { padding: 8px 0; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .table .border-bottom { border-bottom: 1px solid #eee; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .text-right { text-align: right; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .font-bold { font-weight: bold; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .footer { text-align: center; margin-top: 30px; font-size: 0.9em; color: #777; border-top: 1px solid #eee; padding-top: 20px; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         ul { padding-left: 20px; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .barcode-container { text-align: center; margin: 20px 0; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         .barcode-info { font-size: 12px; color: #777; margin-top: 5px; }<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:     &lt;/style&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: &lt;/head&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: &lt;body&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:     &lt;div class=&#039;container&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;div class=&#039;header&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;h1&gt;Coffee Prince Library&lt;/h1&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;p&gt;Book Borrowing Receipt&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;p style=&#039;font-size: 0.9em; color: #777;&#039;&gt;Transaction #29&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;div class=&#039;barcode-container&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;img src=&#039;https://bwipjs-api.metafloor.com/?bcid=code128&amp;text=TRX29&amp;scale=2&amp;includetext=true&amp;textsize=13&amp;textyoffset=5&amp;backgroundcolor=ffffff&#039; alt=&#039;Transaction Barcode&#039; style=&#039;max-width: 100%; height: auto;&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;p class=&#039;barcode-info&#039;&gt;Scan this barcode when returning the book&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;div class=&#039;section&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;div style=&#039;display: flex; justify-content: space-between;&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                     &lt;p style=&#039;font-size: 0.9em; color: #777;&#039;&gt;Date Borrowed:&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                     &lt;p style=&#039;font-weight: bold;&#039;&gt;June 5, 2025, 11:32 PM&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                     &lt;p style=&#039;font-size: 0.9em; color: #777;&#039;&gt;Due Date:&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                     &lt;p style=&#039;font-weight: bold;&#039;&gt;June 19, 2025&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;div class=&#039;section&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;h3&gt;Book Details&lt;/h3&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;div class=&#039;info-box&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;p&gt;&lt;span style=&#039;font-weight: bold;&#039;&gt;Title:&lt;/span&gt; The Subtle Art of Not Giving a Fuck&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;p&gt;&lt;span style=&#039;font-weight: bold;&#039;&gt;Author:&lt;/span&gt; Mark Manson&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;p&gt;&lt;span style=&#039;font-weight: bold;&#039;&gt;Barcode:&lt;/span&gt; 9780062641540&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;div class=&#039;section&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;h3&gt;Borrower Details&lt;/h3&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;div class=&#039;info-box&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;p&gt;&lt;span style=&#039;font-weight: bold;&#039;&gt;Name:&lt;/span&gt; Gabriel Valmera&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;p&gt;&lt;span style=&#039;font-weight: bold;&#039;&gt;Member ID:&lt;/span&gt; MEM2010&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;div class=&#039;section&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;h3&gt;Payment Details&lt;/h3&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;table class=&#039;table&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;tr class=&#039;border-bottom&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                     &lt;td&gt;Borrowing Fee&lt;/td&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                     &lt;td class=&#039;text-right font-bold&#039;&gt;₱50.00&lt;/td&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;/tr&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;tr class=&#039;border-bottom font-bold&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                     &lt;td&gt;Total&lt;/td&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                     &lt;td class=&#039;text-right&#039;&gt;₱50.00&lt;/td&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;/tr&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;/table&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;div class=&#039;section&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;h3&gt;Important Notes&lt;/h3&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;ul&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;li&gt;Please return the book on or before the due date.&lt;/li&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;li&gt;Late returns will incur a penalty fee of 3x the original borrowing fee.&lt;/li&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;li&gt;Please handle library materials with care.&lt;/li&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;li&gt;For any inquiries, please contact the library staff.&lt;/li&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:                 &lt;li&gt;&lt;strong&gt;Important:&lt;/strong&gt; Please bring this receipt when returning the book.&lt;/li&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;/ul&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;div class=&#039;footer&#039;&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;p&gt;Thank you for using Coffee Prince Library!&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:             &lt;p&gt;This receipt was generated on 2025-06-05 17:32:43&lt;/p&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:         &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER:     &lt;/div&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: &lt;/body&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: &lt;/html&gt;<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: --b1=_2u5ELkvecFmP2qNBOSHBLCqCiywcvvUUXgFAc2svUqE--<br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: <br>
+2025-06-05 15:32:45 CLIENT -&gt; SERVER: .<br>
+2025-06-05 15:32:46 SERVER -&gt; CLIENT: 250 2.0.0 OK  1749137566 d9443c01a7336-23506cf39e1sm121126025ad.160 - gsmtp<br>
+2025-06-05 15:32:46 CLIENT -&gt; SERVER: QUIT<br>
+2025-06-05 15:32:46 SERVER -&gt; CLIENT: 221 2.0.0 closing connection d9443c01a7336-23506cf39e1sm121126025ad.160 - gsmtp<br>
+
+2025-06-05 17:32:46 - Port 465/SSL result: SUCCESS
+2025-06-05 17:32:46 - Direct email result: SUCCESS
+2025-06-05 17:32:46 - Borrowing receipt email process complete for transaction ID: 29 - Status: SUCCESS
