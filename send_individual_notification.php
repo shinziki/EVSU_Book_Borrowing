@@ -49,7 +49,7 @@ try {
     $message .= "Book details:\n";
     $message .= "- Title: " . $data['book_title'] . "\n";
     $message .= "- Author: " . $data['book_author'] . "\n";
-    $message .= "- Due date: " . date('F j, Y', strtotime($data['due_date'])) . "\n";
+    $message .= "- Due date: " . date('F j, Y, g:i A', strtotime($data['due_date'])) . "\n";
     $message .= "- Days overdue: " . $data['days_overdue'] . "\n";
     $message .= "- Late fee: " . number_format($penaltyAmount, 2) . " pesos\n\n";
     $message .= "Please return the book as soon as possible to avoid additional fees.\n\n";
@@ -86,7 +86,7 @@ try {
             <div class='info-box'>
                 <p><strong>Title:</strong> " . htmlspecialchars($data['book_title']) . "</p>
                 <p><strong>Author:</strong> " . htmlspecialchars($data['book_author']) . "</p>
-                <p><strong>Due Date:</strong> " . date('F j, Y', strtotime($data['due_date'])) . "</p>
+                <p><strong>Due Date:</strong> " . date('F j, Y, g:i A', strtotime($data['due_date'])) . "</p>
                 <p><strong>Days Overdue:</strong> " . $data['days_overdue'] . "</p>
                 <p class='penalty'><strong>Late Fee:</strong> ₱" . number_format($penaltyAmount, 2) . "</p>
             </div>

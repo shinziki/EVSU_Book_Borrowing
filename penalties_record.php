@@ -46,7 +46,7 @@ include 'includes/header.php';
                     <?php foreach ($penalties as $penalty): ?>
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                <?php echo date('M j, Y', strtotime($penalty['return_date'])); ?>
+                                <?php echo date('M j, Y, g:i A', strtotime($penalty['return_date'])); ?>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                 <?php echo htmlspecialchars($penalty['member_name']); ?>

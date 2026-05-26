@@ -89,9 +89,9 @@ function getAnnualReportData($year)
 
     $stmt = $pdo->prepare("
         SELECT t.id, b.title AS book_title, m.fullname AS member_name,
-               DATE_FORMAT(t.borrow_date, '%Y-%m-%d') AS borrow_date,
-               DATE_FORMAT(t.due_date, '%Y-%m-%d') AS due_date,
-               DATE_FORMAT(t.return_date, '%Y-%m-%d') AS return_date,
+               DATE_FORMAT(t.borrow_date, '%Y-%m-%d %h:%i %p') AS borrow_date,
+               DATE_FORMAT(t.due_date, '%Y-%m-%d %h:%i %p') AS due_date,
+               DATE_FORMAT(t.return_date, '%Y-%m-%d %h:%i %p') AS return_date,
                t.status, t.payment_amount, t.penalty_amount, t.payment_status
         FROM transactions t
         JOIN books b ON t.book_id = b.id
@@ -105,7 +105,7 @@ function getAnnualReportData($year)
     $stmt = $pdo->prepare("
         SELECT t.id, b.title AS book_title, m.fullname AS member_name,
                t.penalty_type, t.penalty_amount, t.payment_status, t.status,
-               DATE_FORMAT(t.borrow_date, '%Y-%m-%d') AS borrow_date
+               DATE_FORMAT(t.borrow_date, '%Y-%m-%d %h:%i %p') AS borrow_date
         FROM transactions t
         JOIN books b ON t.book_id = b.id
         JOIN members m ON t.member_id = m.id
@@ -117,7 +117,7 @@ function getAnnualReportData($year)
 
     $stmt = $pdo->prepare("
         SELECT t.id, b.title AS book_title, m.fullname AS member_name,
-               DATE_FORMAT(t.due_date, '%Y-%m-%d') AS due_date, t.status,
+               DATE_FORMAT(t.due_date, '%Y-%m-%d %h:%i %p') AS due_date, t.status,
                t.penalty_amount, t.payment_status
         FROM transactions t
         JOIN books b ON t.book_id = b.id
@@ -132,7 +132,7 @@ function getAnnualReportData($year)
     $data['overdue'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $stmt = $pdo->prepare("
-        SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS sent_date, type,
+        SELECT DATE_FORMAT(created_at, '%Y-%m-%d %h:%i %p') AS sent_date, type,
                LEFT(message, 120) AS message_preview, is_sent
         FROM notifications
         WHERE created_at BETWEEN :start AND :end
@@ -233,7 +233,7 @@ function generateAnnualReportPdf($year)
     $pdf->drawTable(
         ['ID', 'Book', 'Member', 'Borrowed', 'Due', 'Returned', 'Status'],
         $txRows,
-        [28, 105, 90, 58, 58, 58, 58]
+        [28, 93, 80, 66, 66, 66, 56]
     );
     $pdf->writeSectionBreak();
 
@@ -272,7 +272,7 @@ function generateAnnualReportPdf($year)
     $pdf->drawTable(
         ['ID', 'Book', 'Member', 'Due Date', 'Status', 'Penalty', 'Payment'],
         $overdueRows,
-        [28, 115, 100, 58, 58, 58, 98]
+        [28, 107, 90, 68, 58, 58, 106]
     );
     $pdf->writeSectionBreak();
 

@@ -84,7 +84,7 @@ include 'includes/header.php';
                                 </div>
                             </td>
                             <td class="px-4 py-3">
-                                <?php echo date('M j, Y', strtotime($overdue['due_date'])); ?>
+                                <?php echo date('M j, Y, g:i A', strtotime($overdue['due_date'])); ?>
                             </td>
                             <td class="px-4 py-3">
                                 <?php if ($overdue['days_overdue'] > 7): ?>

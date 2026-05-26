@@ -123,13 +123,13 @@ include 'includes/header.php';
                                 <div class="text-xs text-gray-500 dark:text-gray-400">Barcode: <?php echo htmlspecialchars($transaction['member_barcode']); ?></div>
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                <?php echo date('M j, Y', strtotime($transaction['borrow_date'])); ?>
+                                <?php echo date('M j, Y, g:i A', strtotime($transaction['borrow_date'])); ?>
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                <?php echo date('M j, Y', strtotime($transaction['due_date'])); ?>
+                                <?php echo date('M j, Y, g:i A', strtotime($transaction['due_date'])); ?>
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                <?php echo ($transaction['return_date']) ? date('M j, Y', strtotime($transaction['return_date'])) : '-'; ?>
+                                <?php echo ($transaction['return_date']) ? date('M j, Y, g:i A', strtotime($transaction['return_date'])) : '-'; ?>
                             </td>
                             <td class="px-6 py-4">
                                 <?php if ($transaction['status'] === 'Borrowed'): ?>

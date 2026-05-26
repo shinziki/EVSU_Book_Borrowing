@@ -233,7 +233,7 @@ include 'includes/header.php';
                     <div class="flex justify-between">
                         <span class="text-gray-600 dark:text-gray-400">Due Date:</span>
                         <span class="font-medium <?php echo (strtotime($transactionInfo['due_date']) < time()) ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-white'; ?>">
-                            <?php echo date('M j, Y', strtotime($transactionInfo['due_date'])); ?>
+                            <?php echo date('M j, Y, g:i A', strtotime($transactionInfo['due_date'])); ?>
                         </span>
                     </div>
                     
@@ -325,7 +325,7 @@ include 'includes/header.php';
                                     <p class="text-sm text-gray-600 dark:text-gray-400">Returned by: <?php echo htmlspecialchars($return['member_name']); ?></p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-sm text-gray-600 dark:text-gray-400"><?php echo date('M j, Y', strtotime($return['return_date'])); ?></p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400"><?php echo date('M j, Y, g:i A', strtotime($return['return_date'])); ?></p>
                                     <p class="text-xs">
                                         <span class="inline-block px-2 py-1 rounded-full <?php echo (strpos($return['payment_status'], 'Paid') !== false) ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; ?>">
                                             <?php echo htmlspecialchars($return['payment_status']); ?>

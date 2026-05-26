@@ -419,7 +419,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div>
                     <p style='font-size: 0.9em; color: #777;'>Due Date:</p>
-                    <p style='font-weight: bold;'>" . date('F j, Y', strtotime($transactionData['due_date'])) . "</p>
+                    <p style='font-weight: bold;'>" . date('F j, Y, g:i A', strtotime($transactionData['due_date'])) . "</p>
                 </div>
             </div>
         </div>
@@ -465,7 +465,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 Transaction #" . $transactionData['id'] . "
  
 DATE BORROWED: " . date('F j, Y, g:i A', strtotime($transactionData['borrow_date'])) . "
-DUE DATE: " . date('F j, Y', strtotime($transactionData['due_date'])) . "
+DUE DATE: " . date('F j, Y, g:i A', strtotime($transactionData['due_date'])) . "
  
 BOOK DETAILS:
 Title: " . $_SESSION['borrow_book_info']['title'] . "
@@ -490,7 +490,7 @@ This receipt was generated on " . date('Y-m-d H:i:s');
                 $notificationType = 'Borrowed';
                 $notificationMessage = "Dear " . htmlspecialchars($memberInfo['fullname']) . ",\n\n";
                 $notificationMessage .= "You have borrowed the book '" . htmlspecialchars($_SESSION['borrow_book_info']['title']) . "' from Coffee Prince Library.\n";
-                $notificationMessage .= "Due date: " . date('F j, Y', strtotime($transactionData['due_date'])) . "\n\n";
+                $notificationMessage .= "Due date: " . date('F j, Y, g:i A', strtotime($transactionData['due_date'])) . "\n\n";
                 $notificationMessage .= "Thank you for using Coffee Prince Library!\n";
                 
                 // Record notification in database
@@ -756,7 +756,7 @@ include 'includes/header.php';
                                     <p class="text-sm text-gray-600 dark:text-gray-400">Borrowed by: <?php echo htmlspecialchars($borrowing['member_name']); ?></p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">Due: <?php echo date('M j, Y', strtotime($borrowing['due_date'])); ?></p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Due: <?php echo date('M j, Y, g:i A', strtotime($borrowing['due_date'])); ?></p>
                                 </div>
                             </div>
                         <?php endforeach; ?>

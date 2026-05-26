@@ -72,7 +72,7 @@ include 'includes/header.php';
                     <div>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Due Date:</p>
                         <p class="font-medium text-gray-800 dark:text-white">
-                            <?php echo date('F j, Y', strtotime($receipt['due_date'])); ?>
+                            <?php echo date('F j, Y, g:i A', strtotime($receipt['due_date'])); ?>
                         </p>
                     </div>
                 </div>

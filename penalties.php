@@ -279,7 +279,7 @@ function processBookPenalty($bookBarcode, $penaltyType) {
                 <p><strong>Title:</strong> " . htmlspecialchars($book['title']) . "</p>
                 <p><strong>Author:</strong> " . htmlspecialchars($book['author']) . "</p>
                 <p><strong>Barcode:</strong> " . htmlspecialchars($book['barcode']) . "</p>
-                <p><strong>Borrow Date:</strong> " . date('F j, Y', strtotime($transaction['borrow_date'])) . "</p>
+                <p><strong>Borrow Date:</strong> " . date('F j, Y, g:i A', strtotime($transaction['borrow_date'])) . "</p>
             </div>
         </div>
         
@@ -422,11 +422,11 @@ include 'includes/header.php';
                     </div>
                     <div>
                         <span class="text-gray-500 dark:text-gray-400">Borrow Date:</span>
-                        <span class="text-gray-800 dark:text-white ml-1"><?php echo date('M j, Y', strtotime($transactionInfo['borrow_date'])); ?></span>
+                        <span class="text-gray-800 dark:text-white ml-1"><?php echo date('M j, Y, g:i A', strtotime($transactionInfo['borrow_date'])); ?></span>
                     </div>
                     <div>
                         <span class="text-gray-500 dark:text-gray-400">Due Date:</span>
-                        <span class="text-gray-800 dark:text-white ml-1"><?php echo date('M j, Y', strtotime($transactionInfo['due_date'])); ?></span>
+                        <span class="text-gray-800 dark:text-white ml-1"><?php echo date('M j, Y, g:i A', strtotime($transactionInfo['due_date'])); ?></span>
                     </div>
                     <div>
                         <span class="text-gray-500 dark:text-gray-400">Status:</span>
