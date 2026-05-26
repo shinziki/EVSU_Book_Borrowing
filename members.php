@@ -4,8 +4,12 @@ require_once 'config/functions.php';
 
 // Require login to access this page
 requireLogin();
+ensureMemberCourseColumn();
+ensureMemberStatusColumn();
 
 $canManageMembers = isAdmin() || staffHasPermission('members.edit');
+$courseOptions = getMemberCourseOptions();
+$statusOptions = getMemberStatusOptions();
 $canAddMembers = isStaff() && staffHasPermission('members.add');
 
 // Process form submissions
@@ -152,11 +156,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = $_POST['phone'] ?? '';
     $address = $_POST['address'] ?? '';
     $barcode = $_POST['barcode'] ?? '';
+    $course = trim($_POST['course'] ?? '');
+    $memberStatus = $_POST['status'] ?? 'active';
     $notifications_enabled = isset($_POST['notifications_enabled']) ? 1 : 0;
+    $isEdit = isset($_POST['id']) && !empty($_POST['id']);
+
+    if (!array_key_exists($memberStatus, $statusOptions)) {
+        $memberStatus = 'active';
+    }
     
     // Validate required fields
     if (empty($fullname)) {
         setFlashMessage('Member name is required', 'error');
+    } elseif (empty($course) || !array_key_exists($course, $courseOptions)) {
+        setFlashMessage('Please select a valid course', 'error');
     } else {
         try {
             // Handle photo upload
@@ -186,12 +199,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $barcode = generateMemberBarcode();
             }
             
-            if (isset($_POST['id']) && !empty($_POST['id'])) {
+            if ($isEdit) {
                 // Update existing member
                 $update_sql = "
                     UPDATE members 
                     SET fullname = :fullname, email = :email, phone = :phone, 
-                        address = :address, barcode = :barcode, 
+                        address = :address, course = :course, status = :status, barcode = :barcode, 
                         notifications_enabled = :notifications_enabled
                 ";
                 
@@ -207,6 +220,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bindParam(':email', $email);
                 $stmt->bindParam(':phone', $phone);
                 $stmt->bindParam(':address', $address);
+                $stmt->bindParam(':course', $course);
+                $stmt->bindParam(':status', $memberStatus);
                 $stmt->bindParam(':barcode', $barcode);
                 $stmt->bindParam(':notifications_enabled', $notifications_enabled);
                 $stmt->bindParam(':id', $_POST['id'], PDO::PARAM_INT);
@@ -227,13 +242,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Add new member
                 $stmt = $pdo->prepare("
-                    INSERT INTO members (fullname, email, phone, address, barcode, photo_path, notifications_enabled)
-                    VALUES (:fullname, :email, :phone, :address, :barcode, :photo_path, :notifications_enabled)
+                    INSERT INTO members (fullname, email, phone, address, course, status, barcode, photo_path, notifications_enabled)
+                    VALUES (:fullname, :email, :phone, :address, :course, :status, :barcode, :photo_path, :notifications_enabled)
                 ");
                 $stmt->bindParam(':fullname', $fullname);
                 $stmt->bindParam(':email', $email);
                 $stmt->bindParam(':phone', $phone);
                 $stmt->bindParam(':address', $address);
+                $stmt->bindParam(':course', $course);
+                $stmt->bindParam(':status', $memberStatus);
                 $stmt->bindParam(':barcode', $barcode);
                 $stmt->bindParam(':photo_path', $photo_path);
                 $stmt->bindParam(':notifications_enabled', $notifications_enabled);
@@ -287,27 +304,41 @@ if ($action === 'edit' && $memberId) {
 }
 
 // Get all members for listing
-$search = $_GET['search'] ?? '';
+$search = trim($_GET['search'] ?? '');
+$courseFilter = $_GET['course'] ?? '';
+if ($courseFilter !== '' && !array_key_exists($courseFilter, $courseOptions)) {
+    $courseFilter = '';
+}
 
-if (!empty($search)) {
-    // Search query
-    $searchParam = "%$search%";
-    $stmt = $pdo->prepare("
-        SELECT * FROM members 
-        WHERE fullname LIKE :search 
-        OR email LIKE :search 
-        OR phone LIKE :search 
+$memberQuery = 'SELECT * FROM members WHERE 1=1';
+$memberParams = [];
+
+if ($search !== '') {
+    $memberQuery .= ' AND (
+        fullname LIKE :search
+        OR email LIKE :search
+        OR phone LIKE :search
         OR barcode LIKE :search
         OR address LIKE :search
-        ORDER BY fullname
-    ");
-    $stmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
-    $stmt->execute();
-} else {
-    // Get all members
-$stmt = $pdo->query("SELECT * FROM members ORDER BY fullname");
+        OR course LIKE :search
+    )';
+    $memberParams[':search'] = '%' . $search . '%';
 }
+
+if ($courseFilter !== '') {
+    $memberQuery .= ' AND course = :course';
+    $memberParams[':course'] = $courseFilter;
+}
+
+$memberQuery .= ' ORDER BY fullname';
+$stmt = $pdo->prepare($memberQuery);
+foreach ($memberParams as $key => $value) {
+    $stmt->bindValue($key, $value);
+}
+$stmt->execute();
 $members = $stmt->fetchAll();
+
+$hasActiveFilters = ($search !== '' || $courseFilter !== '');
 
 // Include header
 include 'includes/header.php';
@@ -356,6 +387,22 @@ include 'includes/header.php';
                            value="<?php echo ($memberData) ? htmlspecialchars($memberData['phone']) : ''; ?>"
                            class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
                 </div>
+
+                <div>
+                    <label for="course" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Course *</label>
+                    <select id="course" name="course" required
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                        <option value="">Select a course</option>
+                        <?php
+                        $selectedCourse = ($memberData && !empty($memberData['course'])) ? $memberData['course'] : '';
+                        foreach ($courseOptions as $code => $label):
+                        ?>
+                            <option value="<?php echo htmlspecialchars($code); ?>" <?php echo ($selectedCourse === $code) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($label); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 
                 <div>
                     <label for="barcode" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Barcode</label>
@@ -364,6 +411,26 @@ include 'includes/header.php';
                            placeholder="Leave empty to auto-generate"
                            class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
                 </div>
+
+                <?php if ($action === 'edit'): ?>
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Member Status *</label>
+                    <select id="status" name="status" required
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                        <?php
+                        $selectedStatus = ($memberData && !empty($memberData['status'])) ? $memberData['status'] : 'active';
+                        foreach ($statusOptions as $code => $label):
+                        ?>
+                            <option value="<?php echo htmlspecialchars($code); ?>" <?php echo ($selectedStatus === $code) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($label); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Inactive members cannot borrow books.</p>
+                </div>
+                <?php else: ?>
+                <input type="hidden" name="status" value="active">
+                <?php endif; ?>
                 
                 <div class="md:col-span-2">
                     <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
@@ -424,15 +491,26 @@ include 'includes/header.php';
         <form method="GET" action="members.php" class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 flex flex-wrap items-center gap-4">
             <div class="flex-1 min-w-[200px]">
                 <input type="text" name="search" placeholder="Search by name, email, phone or barcode..." 
-                    value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>"
+                    value="<?php echo htmlspecialchars($search); ?>"
                     class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+            </div>
+            <div class="w-full sm:w-64">
+                <select name="course"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                    <option value="">All Courses</option>
+                    <?php foreach ($courseOptions as $code => $label): ?>
+                        <option value="<?php echo htmlspecialchars($code); ?>" <?php echo ($courseFilter === $code) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($label); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
             <div>
                 <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center">
                     <i class="fas fa-search mr-2"></i> Search
                 </button>
             </div>
-            <?php if (isset($_GET['search']) && !empty($_GET['search'])): ?>
+            <?php if ($hasActiveFilters): ?>
                 <div>
                     <a href="members.php" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center">
                         <i class="fas fa-times mr-2"></i> Clear
@@ -445,14 +523,14 @@ include 'includes/header.php';
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-                <?php if (!empty($search)): ?>
-                    Search Results
+                <?php if ($hasActiveFilters): ?>
+                    Filtered Members
                 <?php else: ?>
                     All Members
                 <?php endif; ?>
             </h3>
             <span class="text-gray-600 dark:text-gray-400">
-                <?php if (!empty($search)): ?>
+                <?php if ($hasActiveFilters): ?>
                     <?php echo count($members); ?> members found
                 <?php else: ?>
                     <?php echo count($members); ?> registered members
@@ -466,6 +544,8 @@ include 'includes/header.php';
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Member</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Contact</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Course</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Barcode</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Join Date</th>
                         <?php if ($canManageMembers || staffHasPermission('transactions.view')): ?>
@@ -495,6 +575,22 @@ include 'includes/header.php';
                                 <td class="px-6 py-4">
                                     <div class="text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($member['phone']); ?></div>
                                 </td>
+                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                    <?php
+                                    $memberCourse = $member['course'] ?? '';
+                                    echo htmlspecialchars($courseOptions[$memberCourse] ?? ($memberCourse ?: '-'));
+                                    ?>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <?php
+                                    $memberStatus = $member['status'] ?? 'active';
+                                    if ($memberStatus === 'inactive'):
+                                    ?>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Inactive</span>
+                                    <?php else: ?>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="px-6 py-4">
                                     <svg class="barcode-canvas" jsbarcode-format="CODE128" jsbarcode-value="<?php echo htmlspecialchars($member['barcode']); ?>" jsbarcode-textmargin="0" jsbarcode-fontoptions="bold" jsbarcode-height="40"></svg>
                                 </td>
@@ -522,7 +618,7 @@ include 'includes/header.php';
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No members found. Add a member to get started.</td>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No members found. Add a member to get started.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

@@ -1,4 +1,7 @@
 <?php
+// Set timezone to Philippine Standard Time (UTC+8)
+date_default_timezone_set('Asia/Manila');
+
 // Database connection parameters
 $host = 'localhost';
 $dbname = 'coffee_prince_library';

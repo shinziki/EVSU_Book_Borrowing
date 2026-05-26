@@ -64,7 +64,7 @@ function getAnnualReportData($year)
     $stmt->execute([':start' => $start, ':end' => $end]);
     $data['summary']['total_returns'] = (int) $stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) AS c FROM transactions WHERE status = 'Overdue' AND borrow_date BETWEEN :start AND :end");
+    $stmt = $pdo->prepare("SELECT COUNT(*) AS c FROM transactions WHERE status IN ('Overdue', 'Needs Replacement') AND borrow_date BETWEEN :start AND :end");
     $stmt->execute([':start' => $start, ':end' => $end]);
     $data['summary']['overdue_count'] = (int) $stmt->fetchColumn();
 
@@ -122,7 +122,7 @@ function getAnnualReportData($year)
         FROM transactions t
         JOIN books b ON t.book_id = b.id
         JOIN members m ON t.member_id = m.id
-        WHERE t.status IN ('Overdue', 'Borrowed')
+        WHERE t.status IN ('Overdue', 'Borrowed', 'Needs Replacement')
           AND t.due_date < :end
           AND (t.return_date IS NULL OR t.return_date BETWEEN :start AND :end)
           AND t.borrow_date BETWEEN :start AND :end

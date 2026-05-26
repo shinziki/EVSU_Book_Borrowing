@@ -32,7 +32,7 @@ if (isset($_GET['barcode']) && !empty($_GET['barcode'])) {
             SELECT COUNT(*) as active_borrows 
             FROM transactions 
             WHERE member_id = :member_id 
-            AND status IN ('Borrowed', 'Overdue')
+            AND status IN ('Borrowed', 'Overdue', 'Needs Replacement')
         ");
         $stmt->bindParam(':member_id', $memberInfo['id']);
         $stmt->execute();
@@ -47,7 +47,7 @@ if (isset($_GET['barcode']) && !empty($_GET['barcode'])) {
             FROM transactions t
             JOIN books b ON t.book_id = b.id
             WHERE t.member_id = :member_id
-            AND t.status IN ('Borrowed', 'Overdue')
+            AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
             ORDER BY t.due_date ASC
         ");
         $stmt->bindParam(':member_id', $memberInfo['id']);

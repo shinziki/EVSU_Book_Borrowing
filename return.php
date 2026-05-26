@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 SELECT t.*, b.barcode as book_barcode
                 FROM transactions t 
                 JOIN books b ON t.book_id = b.id
-                WHERE t.id = :transaction_id AND t.status IN ('Borrowed', 'Overdue')
+                WHERE t.id = :transaction_id AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
             ");
             $stmt->bindParam(':transaction_id', $transactionId, PDO::PARAM_INT);
             $stmt->execute();
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $pdo->prepare("
                         SELECT COUNT(*) as count
                         FROM transactions
-                        WHERE book_id = :book_id AND status IN ('Borrowed', 'Overdue')
+                        WHERE book_id = :book_id AND status IN ('Borrowed', 'Overdue', 'Needs Replacement')
                     ");
                     $stmt->bindParam(':book_id', $bookInfo['id'], PDO::PARAM_INT);
                     $stmt->execute();
@@ -131,7 +131,7 @@ if (isset($_GET['barcode']) && !empty($_GET['barcode'])) {
             FROM transactions t 
             JOIN books b ON t.book_id = b.id
             JOIN members m ON t.member_id = m.id
-            WHERE t.id = :transaction_id AND t.status IN ('Borrowed', 'Overdue')
+            WHERE t.id = :transaction_id AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
         ");
         $stmt->bindParam(':transaction_id', $transactionId, PDO::PARAM_INT);
         $stmt->execute();
@@ -156,7 +156,7 @@ if (isset($_GET['barcode']) && !empty($_GET['barcode'])) {
                 SELECT t.*, m.fullname as member_name, m.barcode as member_barcode
                 FROM transactions t
                 JOIN members m ON t.member_id = m.id
-                WHERE t.book_id = :book_id AND t.status IN ('Borrowed', 'Overdue')
+                WHERE t.book_id = :book_id AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
                 ORDER BY t.id DESC
                 LIMIT 1
             ");
@@ -215,7 +215,7 @@ include 'includes/header.php';
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600 dark:text-gray-400">Status:</span>
-                        <span class="font-medium <?php echo ($bookInfo['status'] === 'Overdue') ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'; ?>">
+                        <span class="font-medium <?php echo ($bookInfo['status'] === 'Overdue' || $bookInfo['status'] === 'Needs Replacement') ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'; ?>">
                             <?php echo htmlspecialchars($bookInfo['status']); ?>
                         </span>
                     </div>
@@ -238,19 +238,23 @@ include 'includes/header.php';
                     </div>
                     
                     <?php if (strtotime($transactionInfo['due_date']) < time()): ?>
+                        <?php
+                        $latePenalty = (float) ($transactionInfo['penalty_amount'] ?? 0);
+                        if ($latePenalty <= 0) {
+                            $latePenalty = calculateLateReturnPenalty($transactionInfo);
+                        }
+                        ?>
+                        <?php if ($latePenalty > 0): ?>
                         <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Original Fee:</span>
-                            <span class="font-medium text-gray-800 dark:text-white">₱<?php echo number_format($transactionInfo['payment_amount'], 2); ?></span>
+                            <span class="text-gray-600 dark:text-gray-400">Late Penalty:</span>
+                            <span class="font-medium text-red-600 dark:text-red-400">₱<?php echo number_format($latePenalty, 2); ?></span>
                         </div>
+                        <?php else: ?>
                         <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Late Penalty (3x):</span>
-                            <span class="font-medium text-red-600 dark:text-red-400">₱<?php echo number_format($transactionInfo['payment_amount'] * 3, 2); ?></span>
+                            <span class="text-gray-600 dark:text-gray-400">Status:</span>
+                            <span class="font-medium text-red-600 dark:text-red-400">Overdue — penalty may apply</span>
                         </div>
-                    <?php else: ?>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Payment Amount:</span>
-                            <span class="font-medium text-gray-800 dark:text-white">₱<?php echo number_format($transactionInfo['payment_amount'], 2); ?></span>
-                        </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                     
                     <?php if (isset($transactionInfo['id'])): ?>

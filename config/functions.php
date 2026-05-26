@@ -26,6 +26,81 @@ function ensureAdminRoleColumn() {
 }
 
 /**
+ * Ensure members.course column exists.
+ */
+function ensureMemberCourseColumn() {
+    global $pdo;
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+    try {
+        $stmt = $pdo->query("SHOW COLUMNS FROM members LIKE 'course'");
+        if ($stmt->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE members ADD COLUMN course VARCHAR(100) DEFAULT NULL AFTER address");
+        }
+    } catch (PDOException $e) {
+        error_log('ensureMemberCourseColumn: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Course/program options for member registration.
+ */
+/**
+ * Ensure members.status column exists (active | inactive).
+ */
+function ensureMemberStatusColumn() {
+    global $pdo;
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+    try {
+        $stmt = $pdo->query("SHOW COLUMNS FROM members LIKE 'status'");
+        if ($stmt->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE members ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active' AFTER course");
+            $pdo->exec("UPDATE members SET status = 'active' WHERE status = '' OR status IS NULL");
+        }
+    } catch (PDOException $e) {
+        error_log('ensureMemberStatusColumn: ' . $e->getMessage());
+    }
+}
+
+function getMemberStatusOptions() {
+    return [
+        'active' => 'Active',
+        'inactive' => 'Inactive',
+    ];
+}
+
+function isMemberActive($member) {
+    ensureMemberStatusColumn();
+    if (!$member || !is_array($member)) {
+        return false;
+    }
+    return ($member['status'] ?? 'active') === 'active';
+}
+
+function getMemberCourseOptions() {
+    return [
+        'BSIT' => 'BSIT - Bachelor of Science in Information Technology',
+        'BSCS' => 'BSCS - Bachelor of Science in Computer Science',
+        'BSCE' => 'BSCE - Bachelor of Science in Civil Engineering',
+        'BSEE' => 'BSEE - Bachelor of Science in Electrical Engineering',
+        'BSME' => 'BSME - Bachelor of Science in Mechanical Engineering',
+        'BSBA' => 'BSBA - Bachelor of Science in Business Administration',
+        'BSED' => 'BSED - Bachelor of Science in Education',
+        'BSHM' => 'BSHM - Bachelor of Science in Hospitality Management',
+        'BSN' => 'BSN - Bachelor of Science in Nursing',
+        'BSCrim' => 'BSCrim - Bachelor of Science in Criminology',
+        'Other' => 'Other',
+    ];
+}
+
+/**
  * Check if user is logged in
  */
 function isLoggedIn() {
@@ -632,7 +707,7 @@ function memberHasReachedBorrowLimit($memberId) {
     $stmt = $pdo->prepare("
         SELECT COUNT(*) as active_borrows
         FROM transactions
-        WHERE member_id = :member_id AND status IN ('Borrowed', 'Overdue')
+        WHERE member_id = :member_id AND status IN ('Borrowed', 'Overdue', 'Needs Replacement')
     ");
     $stmt->bindParam(':member_id', $memberId, PDO::PARAM_INT);
     $stmt->execute();
@@ -647,9 +722,22 @@ function memberHasReachedBorrowLimit($memberId) {
 function getPenaltySettings() {
     return [
         'borrowing_limit' => 3,
+        'late_return_fee' => 25.00,
         'damaged_book_fee' => 1500.00,
         'lost_book_fee' => 2000.00
     ];
+}
+
+/**
+ * Late return penalty (legacy borrows with a fee use 3x that fee; otherwise flat late fee).
+ */
+function calculateLateReturnPenalty(array $transaction) {
+    $borrowFee = (float) ($transaction['payment_amount'] ?? 0);
+    if ($borrowFee > 0) {
+        return $borrowFee * 3;
+    }
+    $settings = getPenaltySettings();
+    return (float) ($settings['late_return_fee'] ?? 25.00);
 }
 
 /**
@@ -661,7 +749,7 @@ function getPenaltySettings() {
  * @param float $paymentAmount Payment amount
  * @return bool True if successful
  */
-function borrowBook($bookBarcode, $memberBarcode, $days = 14, $paymentAmount = 0) {
+function borrowBook($bookBarcode, $memberBarcode, $days = 1, $paymentAmount = 0.00) {
     global $pdo;
     
     try {
@@ -686,6 +774,12 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 14, $paymentAmount = 0
         
         if (!$member) {
             file_put_contents($logFile, date('Y-m-d H:i:s') . " - Member not found with barcode: $memberBarcode\n", FILE_APPEND);
+            return false;
+        }
+
+        if (!isMemberActive($member)) {
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Inactive member cannot borrow: ID=" . $member['id'] . "\n", FILE_APPEND);
+            setFlashMessage('This member is inactive and cannot borrow books.', 'error');
             return false;
         }
         
@@ -856,11 +950,10 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 14, $paymentAmount = 0
                 <p><strong>Author:</strong> " . htmlspecialchars($book['author']) . "</p>
                 <p><strong>Borrow Date:</strong> " . date('F j, Y') . "</p>
                 <p><strong>Due Date:</strong> " . date('F j, Y', strtotime($dueDate)) . "</p>
-                <p><strong>Payment Amount:</strong> ₱" . number_format($paymentAmount, 2) . "</p>
             </div>
             
             <p>Please return the book on or before the due date to avoid penalties.</p>
-            <p>Late returns incur a penalty of 3x the original borrowing fee.</p>
+            <p>Late returns may incur a penalty fee.</p>
             
             <p>Thank you for using Coffee Prince Library!</p>
         </div>
@@ -874,10 +967,9 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 14, $paymentAmount = 0
             $plainTextMessage .= "Title: " . $book['title'] . "\n";
             $plainTextMessage .= "Author: " . $book['author'] . "\n";
             $plainTextMessage .= "Borrow Date: " . date('F j, Y') . "\n";
-            $plainTextMessage .= "Due Date: " . date('F j, Y', strtotime($dueDate)) . "\n";
-            $plainTextMessage .= "Payment Amount: ₱" . number_format($paymentAmount, 2) . "\n\n";
+            $plainTextMessage .= "Due Date: " . date('F j, Y', strtotime($dueDate)) . "\n\n";
             $plainTextMessage .= "Please return the book on or before the due date to avoid penalties.\n";
-            $plainTextMessage .= "Late returns incur a penalty of 3x the original borrowing fee.\n\n";
+            $plainTextMessage .= "Late returns may incur a penalty fee.\n\n";
             $plainTextMessage .= "Thank you for using Coffee Prince Library!\n";
             
             try {
@@ -940,7 +1032,7 @@ function returnBook($bookBarcode) {
             SELECT t.*, m.fullname, m.email, m.notifications_enabled
             FROM transactions t
             JOIN members m ON t.member_id = m.id
-            WHERE t.book_id = :book_id AND t.status IN ('Borrowed', 'Overdue')
+            WHERE t.book_id = :book_id AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
             ORDER BY t.id DESC
             LIMIT 1
         ");
@@ -957,7 +1049,7 @@ function returnBook($bookBarcode) {
         $dueDate = strtotime($transaction['due_date']);
         $today = strtotime('today');
         $hasPenalty = ($today > $dueDate);
-        $penaltyAmount = $hasPenalty ? ($transaction['payment_amount'] * 3) : 0;
+        $penaltyAmount = $hasPenalty ? calculateLateReturnPenalty($transaction) : 0;
         
         // Get column names from transactions table to ensure we're using the right field name
         $stmt = $pdo->query("DESCRIBE transactions");
@@ -1235,31 +1327,44 @@ function updateOverdueBooks() {
         
         // Get all borrowed books with due date passed
         $stmt = $pdo->prepare("
-            SELECT t.id, t.book_id, t.due_date, b.title 
+            SELECT t.id, t.book_id, t.due_date, t.borrow_date, b.title 
             FROM transactions t
             JOIN books b ON t.book_id = b.id
-            WHERE t.status = 'Borrowed' AND t.due_date < CURRENT_DATE
+            WHERE t.status IN ('Borrowed', 'Overdue') AND t.due_date < CURRENT_DATE
         ");
         $stmt->execute();
         $overdueBooks = $stmt->fetchAll();
         
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Found " . count($overdueBooks) . " overdue books\n", FILE_APPEND);
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Found " . count($overdueBooks) . " active overdue books/transactions\n", FILE_APPEND);
         
         foreach ($overdueBooks as $book) {
-            // Log the book being updated
-            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Marking book ID " . $book['book_id'] . " (" . $book['title'] . ") as overdue. Due date was " . $book['due_date'] . "\n", FILE_APPEND);
+            $borrowDateStr = substr($book['borrow_date'], 0, 10);
+            $borrowDate = strtotime($borrowDateStr);
+            $today = strtotime(date('Y-m-d'));
+            $daysSinceBorrow = floor(($today - $borrowDate) / (60 * 60 * 24));
             
-            // Update book status to overdue
-            $stmt = $pdo->prepare("UPDATE books SET status = 'Overdue' WHERE id = :id");
+            if ($daysSinceBorrow >= 7) {
+                $newStatus = 'Needs Replacement';
+            } else {
+                $newStatus = 'Overdue';
+            }
+            
+            // Log the book being updated
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Updating book ID " . $book['book_id'] . " (" . $book['title'] . ") status to " . $newStatus . ". Borrow date was " . $book['borrow_date'] . ", Due date was " . $book['due_date'] . " (Days since borrow: " . $daysSinceBorrow . ")\n", FILE_APPEND);
+            
+            // Update book status
+            $stmt = $pdo->prepare("UPDATE books SET status = :status WHERE id = :id");
+            $stmt->bindParam(':status', $newStatus);
             $stmt->bindParam(':id', $book['book_id'], PDO::PARAM_INT);
             $stmt->execute();
             
-            // Update transaction status to overdue
+            // Update transaction status
             $stmt = $pdo->prepare("
                 UPDATE transactions 
-                SET status = 'Overdue'
+                SET status = :status
                 WHERE id = :transaction_id
             ");
+            $stmt->bindParam(':status', $newStatus);
             $stmt->bindParam(':transaction_id', $book['id'], PDO::PARAM_INT);
             $stmt->execute();
         }
@@ -1306,7 +1411,7 @@ function sendDueDateReminders($daysBeforeDue = 2) {
             $notificationMessage .= "This is a friendly reminder that the book '" . htmlspecialchars($transaction['book_title']) . "' is due soon.\n";
             $notificationMessage .= "Due date: " . date('F j, Y', strtotime($transaction['due_date'])) . "\n\n";
             $notificationMessage .= "Please return the book on time to avoid penalty charges.\n";
-            $notificationMessage .= "Late returns incur a penalty of 3x the original borrowing fee.\n\n";
+            $notificationMessage .= "Late returns may incur a penalty fee.\n\n";
             $notificationMessage .= "Thank you for using Coffee Prince Library!\n";
             
             // Prepare email headers
@@ -1366,7 +1471,7 @@ function sendOverdueNotifications() {
         $notificationsSent = 0;
         
         foreach ($overdueTransactions as $transaction) {
-            $penaltyAmount = $transaction['payment_amount'] * 3;
+            $penaltyAmount = calculateLateReturnPenalty($transaction);
             
             $notificationType = 'Overdue';
             $notificationMessage = "Dear " . htmlspecialchars($transaction['member_name']) . ",\n\n";

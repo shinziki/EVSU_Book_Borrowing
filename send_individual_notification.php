@@ -41,7 +41,7 @@ try {
     }
     
     // Calculate penalty
-    $penaltyAmount = $data['payment_amount'] * 3;
+    $penaltyAmount = calculateLateReturnPenalty($data);
     
     // Create notification message
     $message = "Dear " . $data['member_name'] . ",\n\n";

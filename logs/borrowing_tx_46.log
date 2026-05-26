@@ -1,6 +1,0 @@
-2026-05-12 14:53:27 - Processing borrowing receipt email for transaction ID: 46
-2026-05-12 14:53:27 - Attempting to send email to: ariel.cupta@evsu.edu.ph using direct method
-2026-05-12 14:53:27 - Starting to send borrowing email to: ariel.cupta@evsu.edu.ph
-2026-05-12 14:53:30 - PHPMailer Exception: SMTP Error: Could not authenticate.
-2026-05-12 14:53:30 - Direct email result: FAILED
-2026-05-12 14:53:30 - Borrowing receipt email process complete for transaction ID: 46 - Status: FAILED

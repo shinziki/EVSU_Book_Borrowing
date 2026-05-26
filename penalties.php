@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 FROM transactions t 
                 JOIN books b ON t.book_id = b.id
                 JOIN members m ON t.member_id = m.id
-                WHERE t.id = :transaction_id AND t.status IN ('Borrowed', 'Overdue')
+                WHERE t.id = :transaction_id AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
             ");
             $stmt->bindParam(':transaction_id', $transactionId, PDO::PARAM_INT);
             $stmt->execute();
@@ -109,7 +109,7 @@ if (isset($_GET['barcode']) && !empty($_GET['barcode'])) {
             FROM transactions t 
             JOIN books b ON t.book_id = b.id
             JOIN members m ON t.member_id = m.id
-            WHERE t.id = :transaction_id AND t.status IN ('Borrowed', 'Overdue')
+            WHERE t.id = :transaction_id AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
         ");
         $stmt->bindParam(':transaction_id', $transactionId, PDO::PARAM_INT);
         $stmt->execute();
@@ -134,7 +134,7 @@ if (isset($_GET['barcode']) && !empty($_GET['barcode'])) {
                 SELECT t.*, m.fullname as member_name, m.barcode as member_barcode, m.email as member_email
                 FROM transactions t
                 JOIN members m ON t.member_id = m.id
-                WHERE t.book_id = :book_id AND t.status IN ('Borrowed', 'Overdue')
+                WHERE t.book_id = :book_id AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
                 ORDER BY t.id DESC
                 LIMIT 1
             ");
@@ -167,7 +167,7 @@ function processBookPenalty($bookBarcode, $penaltyType) {
             SELECT t.*, m.fullname, m.email, m.notifications_enabled
             FROM transactions t
             JOIN members m ON t.member_id = m.id
-            WHERE t.book_id = :book_id AND t.status IN ('Borrowed', 'Overdue')
+            WHERE t.book_id = :book_id AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
             ORDER BY t.id DESC
             LIMIT 1
         ");

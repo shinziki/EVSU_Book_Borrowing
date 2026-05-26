@@ -1,5 +1,0 @@
-To: migsbacho04@gmail.com
-Subject: PHP Mail Test
-Date: 2025-06-04 18:33:53
--------------------------------------------
-This is a test email sent using PHP's mail() function at 2025-06-04 18:33:50

@@ -95,24 +95,10 @@ include 'includes/header.php';
             </div>
 
             <div class="mb-6">
-                <h3 class="font-semibold text-gray-800 dark:text-white mb-2">Payment Details</h3>
-                <table class="w-full border-collapse">
-                    <tr class="border-b border-gray-200 dark:border-gray-700">
-                        <td class="py-2">Borrowing Fee</td>
-                        <td class="py-2 text-right font-medium">₱<?php echo number_format($receipt['payment_amount'], 2); ?></td>
-                    </tr>
-                    <tr class="border-b border-gray-200 dark:border-gray-700 font-bold">
-                        <td class="py-2">Total</td>
-                        <td class="py-2 text-right">₱<?php echo number_format($receipt['payment_amount'], 2); ?></td>
-                    </tr>
-                </table>
-            </div>
-
-            <div class="mb-6">
                 <h3 class="font-semibold text-gray-800 dark:text-white mb-2">Important Notes</h3>
                 <ul class="list-disc pl-5 space-y-1 text-sm">
                     <li>Please return the book on or before the due date.</li>
-                    <li>Late returns will incur a penalty fee of 3x the original borrowing fee.</li>
+                    <li>Late returns may incur a penalty fee.</li>
                     <li>Please handle library materials with care.</li>
                     <li>For any inquiries, please contact the library staff.</li>
                     <li><strong>Important:</strong> Please bring this receipt when returning the book.</li>

@@ -71,6 +71,7 @@ include 'includes/header.php';
                 <option value="Borrowed" <?php echo ($status === 'Borrowed') ? 'selected' : ''; ?>>Currently Borrowed</option>
                 <option value="Returned" <?php echo ($status === 'Returned') ? 'selected' : ''; ?>>Returned</option>
                 <option value="Overdue" <?php echo ($status === 'Overdue') ? 'selected' : ''; ?>>Overdue</option>
+                <option value="Needs Replacement" <?php echo ($status === 'Needs Replacement') ? 'selected' : ''; ?>>Needs Replacement</option>
             </select>
         </div>
         
@@ -137,6 +138,10 @@ include 'includes/header.php';
                                     <span class="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Returned</span>
                                 <?php elseif ($transaction['status'] === 'Overdue'): ?>
                                     <span class="px-3 py-1 text-sm rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Overdue</span>
+                                <?php elseif ($transaction['status'] === 'Needs Replacement'): ?>
+                                    <span class="px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">Needs Replacement</span>
+                                <?php else: ?>
+                                    <span class="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"><?php echo htmlspecialchars($transaction['status']); ?></span>
                                 <?php endif; ?>
                             </td>
                         </tr>
