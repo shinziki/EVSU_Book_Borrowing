@@ -10,3 +10,9 @@
 2026-05-27 01:54:50 - Borrowing receipt email process complete for transaction ID: 61 - Status: SUCCESS
 2026-05-28 00:13:04 - Starting borrowing receipt email process for: orwellanthony.barida@evsu.edu.ph (Transaction ID: 62)
 2026-05-28 00:13:08 - Borrowing receipt email process complete for transaction ID: 62 - Status: SUCCESS
+2026-05-28 11:34:32 - Starting borrowing receipt email process for: sherwindave.osma@evsu.edu.ph (Transaction ID: 1)
+2026-05-28 11:34:36 - Borrowing receipt email process complete for transaction ID: 1 - Status: SUCCESS
+2026-05-28 19:49:59 - Starting borrowing receipt email process for: sherwindave.osma@evsu.edu.ph (Transaction ID: 2)
+2026-05-28 19:50:03 - Borrowing receipt email process complete for transaction ID: 2 - Status: SUCCESS
+2026-05-28 20:30:57 - Starting borrowing receipt email process for: miguelito.bacho@evsu.edu.ph (Transaction ID: 3)
+2026-05-28 20:31:01 - Borrowing receipt email process complete for transaction ID: 3 - Status: SUCCESS

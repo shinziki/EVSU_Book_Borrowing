@@ -7,10 +7,10 @@ requireLogin();
 ensureMemberCourseColumn();
 ensureMemberStatusColumn();
 ensureMemberStudentIdColumn();
+ensureMemberInactiveSinceColumn();
 
 $canManageMembers = isAdmin() || staffHasPermission('members.edit');
 $courseOptions = getMemberCourseOptions();
-$statusOptions = getMemberStatusOptions();
 $canAddMembers = isStaff() && staffHasPermission('members.add');
 
 // Process form submissions
@@ -159,11 +159,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barcode = $_POST['barcode'] ?? '';
     $studentId = trim($_POST['student_id'] ?? '');
     $course = trim($_POST['course'] ?? '');
-    $memberStatus = $_POST['status'] ?? 'active';
     $notifications_enabled = isset($_POST['notifications_enabled']) ? 1 : 0;
     $isEdit = isset($_POST['id']) && !empty($_POST['id']);
-
-    if (!array_key_exists($memberStatus, $statusOptions)) {
+    // Status is controlled by the system (auto-inactive/reactivation), not manually editable here.
+    $memberStatus = null;
+    if ($isEdit) {
+        $stmt = $pdo->prepare("SELECT status FROM members WHERE id = :id");
+        $stmt->bindParam(':id', $_POST['id'], PDO::PARAM_INT);
+        $stmt->execute();
+        $memberStatus = $stmt->fetchColumn() ?: 'active';
+    } else {
         $memberStatus = 'active';
     }
     
@@ -196,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
-            // Validate and store student ID
+            // Validate and store student ID (separate from barcode)
             $studentIdToSave = !empty($studentId) ? $studentId : null;
             if ($studentIdToSave !== null) {
                 if ($isEdit) {
@@ -211,8 +216,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header('Location: members.php');
                     exit;
                 }
-                // Use student ID as library barcode for scanning when provided
-                $barcode = $studentIdToSave;
             }
 
             // If no barcode provided, generate one
@@ -445,25 +448,7 @@ include 'includes/header.php';
                            class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
                 </div>
 
-                <?php if ($action === 'edit'): ?>
-                <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Member Status *</label>
-                    <select id="status" name="status" required
-                            class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
-                        <?php
-                        $selectedStatus = ($memberData && !empty($memberData['status'])) ? $memberData['status'] : 'active';
-                        foreach ($statusOptions as $code => $label):
-                        ?>
-                            <option value="<?php echo htmlspecialchars($code); ?>" <?php echo ($selectedStatus === $code) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($label); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Inactive members cannot borrow books.</p>
-                </div>
-                <?php else: ?>
-                <input type="hidden" name="status" value="active">
-                <?php endif; ?>
+                <input type="hidden" name="status" value="<?php echo htmlspecialchars(($memberData && !empty($memberData['status'])) ? $memberData['status'] : 'active'); ?>">
                 
                 <div class="md:col-span-2">
                     <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
@@ -622,8 +607,17 @@ include 'includes/header.php';
                                     <?php
                                     $memberStatus = $member['status'] ?? 'active';
                                     if ($memberStatus === 'inactive'):
+                                        $inactiveDays = null;
+                                        if (!empty($member['inactive_since'])) {
+                                            $inactiveDays = (int) floor((time() - strtotime($member['inactive_since'])) / 86400);
+                                            if ($inactiveDays < 0) {
+                                                $inactiveDays = 0;
+                                            }
+                                        }
                                     ?>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Inactive</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                            Inactive<?php echo ($inactiveDays !== null) ? ' (' . $inactiveDays . ' days)' : ''; ?>
+                                        </span>
                                     <?php else: ?>
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</span>
                                     <?php endif; ?>

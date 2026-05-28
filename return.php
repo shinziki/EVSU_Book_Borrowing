@@ -11,16 +11,48 @@ $transactionInfo = null;
 $memberInfo = null;
 $message = '';
 $messageType = '';
+$borrowerChoices = [];
 
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barcode = $_POST['book_barcode'] ?? '';
+    $selectedTransactionId = (int) ($_POST['transaction_id'] ?? 0);
     
     // Validate inputs
-    if (empty($barcode)) {
+    if (empty($barcode) && $selectedTransactionId <= 0) {
         $message = 'Barcode is required';
         $messageType = 'error';
     } else {
+        // If a specific transaction was selected (ISBN may match multiple active borrows)
+        if ($selectedTransactionId > 0) {
+            $result = returnBookByTransactionId($selectedTransactionId);
+
+            if ($result) {
+                // Mark payment as paid
+                $paymentStatus = ($result['has_penalty']) ? 'Overdue Fee Paid' : 'Paid';
+
+                $stmt = $pdo->prepare("
+                    UPDATE transactions 
+                    SET payment_status = :payment_status
+                    WHERE id = :id
+                ");
+                $stmt->bindParam(':payment_status', $paymentStatus);
+                $stmt->bindParam(':id', $selectedTransactionId, PDO::PARAM_INT);
+                $stmt->execute();
+
+                // Reactivate member after overdue payment/return is recorded
+                if (!empty($result['member_id'])) {
+                    reactivateMemberById((int) $result['member_id']);
+                }
+
+                setFlashMessage('Book returned successfully and payment recorded', 'success');
+                header('Location: return.php');
+                exit;
+            }
+
+            $message = 'Failed to process return. Please try again or contact a librarian.';
+            $messageType = 'error';
+        } else
         // Check if it's a transaction barcode (starting with TRX)
         if (strpos($barcode, 'TRX') === 0) {
             $transactionId = substr($barcode, 3); // Remove TRX prefix
@@ -55,6 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->bindParam(':payment_status', $paymentStatus);
                     $stmt->bindParam(':id', $transactionId, PDO::PARAM_INT);
                     $stmt->execute();
+
+                    // Reactivate member after overdue payment/return is recorded
+                    if (!empty($transactionData['member_id'])) {
+                        reactivateMemberById((int) $transactionData['member_id']);
+                    }
                     
                     setFlashMessage('Book returned successfully and payment recorded', 'success');
                     header('Location: return.php');
@@ -77,12 +114,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$bookInfo) {
                 $message = 'Book not found with barcode: ' . htmlspecialchars($barcode);
                 $messageType = 'error';
-            } elseif ($bookInfo['status'] === 'Available') {
-                $message = 'Book is already available and not borrowed';
-                $messageType = 'error';
             } else {
-                // Process returning
-                if (returnBook($barcode)) {
+                $isIsbnInput = isset($bookInfo['isbn']) && $bookInfo['isbn'] === $barcode;
+
+                if ($isIsbnInput) {
+                    // ISBN may map to multiple physical copies; find active borrows across all copies.
+                    $stmt = $pdo->prepare("
+                        SELECT t.id, t.borrow_date, t.due_date, t.status, m.fullname, m.barcode AS member_barcode,
+                               b.id AS book_id, b.title, b.author, b.isbn, b.status AS book_status
+                        FROM transactions t
+                        JOIN members m ON t.member_id = m.id
+                        JOIN books b ON t.book_id = b.id
+                        WHERE b.isbn = :isbn AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
+                        ORDER BY t.id DESC
+                    ");
+                    $stmt->bindParam(':isbn', $barcode);
+                    $stmt->execute();
+                    $borrowerChoices = $stmt->fetchAll();
+
+                    if (count($borrowerChoices) > 1) {
+                        $first = $borrowerChoices[0];
+                        $bookInfo = [
+                            'id' => $first['book_id'],
+                            'title' => $first['title'],
+                            'author' => $first['author'],
+                            'isbn' => $first['isbn'],
+                            'status' => $first['book_status'],
+                        ];
+                        $message = 'Multiple members are currently borrowing this ISBN. Please select who is returning it.';
+                        $messageType = 'info';
+                        goto done_regular_return;
+                    }
+
+                    if (count($borrowerChoices) === 1) {
+                        $onlyTxId = (int) $borrowerChoices[0]['id'];
+                        $result = returnBookByTransactionId($onlyTxId);
+                        if ($result) {
+                            $paymentStatus = ($result['has_penalty']) ? 'Overdue Fee Paid' : 'Paid';
+                            $stmt = $pdo->prepare("
+                                UPDATE transactions 
+                                SET payment_status = :payment_status
+                                WHERE id = :id
+                            ");
+                            $stmt->bindParam(':payment_status', $paymentStatus);
+                            $stmt->bindParam(':id', $onlyTxId, PDO::PARAM_INT);
+                            $stmt->execute();
+
+                            if (!empty($result['member_id'])) {
+                                reactivateMemberById((int) $result['member_id']);
+                            }
+
+                            setFlashMessage('Book returned successfully and payment recorded', 'success');
+                            header('Location: return.php');
+                            exit;
+                        }
+                        $message = 'Failed to process return. Please try again or contact a librarian.';
+                        $messageType = 'error';
+                        goto done_regular_return;
+                    }
+
+                    $message = 'No active borrowing found for this ISBN.';
+                    $messageType = 'error';
+                    goto done_regular_return;
+                }
+
+                if ($bookInfo['status'] === 'Available') {
+                    $message = 'Book is already available and not borrowed';
+                    $messageType = 'error';
+                } else {
+                // If input is ISBN and this book has multiple active borrows, show borrower choices
+                if (isset($bookInfo['isbn']) && $bookInfo['isbn'] === $barcode) {
+                    $stmt = $pdo->prepare("
+                        SELECT t.id, t.borrow_date, t.due_date, t.status, m.fullname, m.barcode AS member_barcode
+                        FROM transactions t
+                        JOIN members m ON t.member_id = m.id
+                        WHERE t.book_id = :book_id AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
+                        ORDER BY t.id DESC
+                    ");
+                    $stmt->bindParam(':book_id', $bookInfo['id'], PDO::PARAM_INT);
+                    $stmt->execute();
+                    $borrowerChoices = $stmt->fetchAll();
+
+                    if (count($borrowerChoices) > 1) {
+                        $message = 'Multiple members are currently borrowing this book. Please select who is returning it.';
+                        $messageType = 'info';
+                    } elseif (count($borrowerChoices) === 1) {
+                        $onlyTxId = (int) $borrowerChoices[0]['id'];
+                        $result = returnBookByTransactionId($onlyTxId);
+                        if ($result) {
+                            $paymentStatus = ($result['has_penalty']) ? 'Overdue Fee Paid' : 'Paid';
+                            $stmt = $pdo->prepare("
+                                UPDATE transactions 
+                                SET payment_status = :payment_status
+                                WHERE id = :id
+                            ");
+                            $stmt->bindParam(':payment_status', $paymentStatus);
+                            $stmt->bindParam(':id', $onlyTxId, PDO::PARAM_INT);
+                            $stmt->execute();
+
+                            if (!empty($result['member_id'])) {
+                                reactivateMemberById((int) $result['member_id']);
+                            }
+
+                            setFlashMessage('Book returned successfully and payment recorded', 'success');
+                            header('Location: return.php');
+                            exit;
+                        }
+                        $message = 'Failed to process return. Please try again or contact a librarian.';
+                        $messageType = 'error';
+                    } else {
+                        $message = 'No active borrowing found for this ISBN.';
+                        $messageType = 'error';
+                    }
+                } elseif (returnBook($barcode)) {
                     setFlashMessage('Book returned successfully', 'success');
                     header('Location: return.php');
                     exit;
@@ -108,6 +252,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $messageType = 'error';
                 }
             }
+            }
+            done_regular_return:
+            ;
         }
     }
     
@@ -200,6 +347,40 @@ include 'includes/header.php';
                 Process Return
             </button>
         </form>
+
+        <?php if ($bookInfo && count($borrowerChoices) > 1): ?>
+            <div class="mt-6 p-4 bg-amber-50 dark:bg-amber-900 rounded-lg">
+                <h4 class="font-semibold text-amber-800 dark:text-amber-200 mb-2">Select Borrower</h4>
+                <p class="text-amber-800 dark:text-amber-200 text-sm mb-3">
+                    This ISBN has multiple active borrows. Choose the member returning the book.
+                </p>
+                <form method="POST" action="return.php" class="space-y-3">
+                    <input type="hidden" name="book_barcode" value="<?php echo htmlspecialchars($barcode ?? ''); ?>">
+                    <?php foreach ($borrowerChoices as $choice): ?>
+                        <label class="block p-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-white/70 dark:bg-gray-800/40">
+                            <div class="flex items-start gap-3">
+                                <input type="radio" name="transaction_id" value="<?php echo (int) $choice['id']; ?>" required class="mt-1">
+                                <div class="text-sm">
+                                    <div class="font-semibold text-gray-900 dark:text-white">
+                                        <?php echo htmlspecialchars($choice['fullname']); ?>
+                                        <span class="font-normal text-gray-500 dark:text-gray-400">(<?php echo htmlspecialchars($choice['member_barcode']); ?>)</span>
+                                    </div>
+                                    <div class="text-gray-600 dark:text-gray-300">
+                                        Borrowed: <?php echo date('M j, Y, g:i A', strtotime($choice['borrow_date'])); ?>
+                                        • Due: <?php echo date('M j, Y, g:i A', strtotime($choice['due_date'])); ?>
+                                        • Status: <?php echo htmlspecialchars($choice['status']); ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                    <?php endforeach; ?>
+
+                    <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 px-4 rounded-lg transition">
+                        Return Selected Borrow
+                    </button>
+                </form>
+            </div>
+        <?php endif; ?>
         
         <?php if ($bookInfo && $transactionInfo): ?>
             <div class="mt-6 p-4 bg-green-50 dark:bg-green-900 rounded-lg">

@@ -5,6 +5,56 @@ require_once 'config/functions.php';
 // Require login to access this page
 requireLogin();
 
+// Admin-only destructive actions (delete single / delete all)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isAdmin()) {
+        setFlashMessage('You do not have permission to delete transactions.', 'error');
+        header('Location: transactions.php');
+        exit;
+    }
+
+    $action = $_POST['action'] ?? '';
+
+    try {
+        if ($action === 'delete_transaction') {
+            $txId = (int) ($_POST['transaction_id'] ?? 0);
+            if ($txId <= 0) {
+                setFlashMessage('Invalid transaction ID.', 'error');
+                header('Location: transactions.php');
+                exit;
+            }
+
+            $stmt = $pdo->prepare("DELETE FROM transactions WHERE id = :id");
+            $stmt->bindParam(':id', $txId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            setFlashMessage('Transaction deleted successfully.', 'success');
+            header('Location: transactions.php');
+            exit;
+        }
+
+        if ($action === 'delete_all_transactions') {
+            $confirm = trim((string) ($_POST['confirm'] ?? ''));
+            if ($confirm !== 'DELETE ALL') {
+                setFlashMessage('Confirmation text mismatch. Type "DELETE ALL" to proceed.', 'error');
+                header('Location: transactions.php');
+                exit;
+            }
+
+            // Clear all transaction records
+            $pdo->exec("DELETE FROM transactions");
+
+            setFlashMessage('All transactions were deleted.', 'success');
+            header('Location: transactions.php');
+            exit;
+        }
+    } catch (PDOException $e) {
+        setFlashMessage('Database error: ' . $e->getMessage(), 'error');
+        header('Location: transactions.php');
+        exit;
+    }
+}
+
 // Initialize filter variables
 $status = $_GET['status'] ?? 'all';
 $search = $_GET['search'] ?? '';
@@ -51,6 +101,13 @@ include 'includes/header.php';
         <h2 class="text-2xl font-bold text-gray-800 dark:text-white"><?php echo isStaff() ? 'Borrow & Return History' : 'Transaction History'; ?></h2>
         <p class="text-gray-600 dark:text-gray-400">View borrow and return records with member and book details</p>
     </div>
+    <?php if (isAdmin()): ?>
+        <div class="flex gap-2">
+            <button type="button" onclick="openDeleteAllModal()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                <i class="fas fa-trash mr-2"></i> Delete All Transactions
+            </button>
+        </div>
+    <?php endif; ?>
 </div>
 
 <!-- Filters -->
@@ -100,6 +157,9 @@ include 'includes/header.php';
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Due Date</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Return Date</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                    <?php if (isAdmin()): ?>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                    <?php endif; ?>
                 </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -144,17 +204,59 @@ include 'includes/header.php';
                                     <span class="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"><?php echo htmlspecialchars($transaction['status']); ?></span>
                                 <?php endif; ?>
                             </td>
+                            <?php if (isAdmin()): ?>
+                                <td class="px-6 py-4 text-right text-sm">
+                                    <form method="POST" action="transactions.php" onsubmit="return confirm('Delete this transaction? This cannot be undone.');" class="inline">
+                                        <input type="hidden" name="action" value="delete_transaction">
+                                        <input type="hidden" name="transaction_id" value="<?php echo (int) $transaction['id']; ?>">
+                                        <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No transactions found matching the current filters.</td>
+                        <td colspan="<?php echo isAdmin() ? 7 : 6; ?>" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No transactions found matching the current filters.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
 </div>
+
+<?php if (isAdmin()): ?>
+    <!-- Delete All Modal -->
+    <div id="deleteAllModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete all transactions</h3>
+            <p class="text-gray-700 dark:text-gray-300 mb-4">
+                This will permanently delete <strong>all</strong> transaction records. Type <strong>DELETE ALL</strong> to confirm.
+            </p>
+
+            <form method="POST" action="transactions.php" class="space-y-4">
+                <input type="hidden" name="action" value="delete_all_transactions">
+                <input type="text" name="confirm" placeholder="Type DELETE ALL"
+                       class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white">
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeDeleteAllModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">Cancel</button>
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Delete All</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openDeleteAllModal() {
+            document.getElementById('deleteAllModal').classList.remove('hidden');
+        }
+        function closeDeleteAllModal() {
+            document.getElementById('deleteAllModal').classList.add('hidden');
+        }
+    </script>
+<?php endif; ?>
 
 <?php
 // Include footer

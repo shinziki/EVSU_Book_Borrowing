@@ -101,3 +101,43 @@
 2026-05-28 00:14:01 - SMTP not configured, using PHP mail() function
 2026-05-28 00:14:03 - PHP mail() failed, but email is saved to file
 2026-05-28 00:14:03 - Email status: FALLBACK SUCCESS (Saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_001401_orwellanthony_barida_evsu_edu_ph.txt)
+2026-05-28 11:33:34 - PHPMailer: INSTALLED
+2026-05-28 11:34:29 - PHPMailer: INSTALLED
+2026-05-28 11:34:29 - Attempting to send email to: sherwindave.osma@evsu.edu.ph | Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+2026-05-28 11:34:29 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_113429_sherwindave_osma_evsu_edu_ph.txt
+2026-05-28 11:34:29 - PHPMailer detection check: FOUND
+2026-05-28 11:34:29 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-05-28 11:34:29 - Set from: evsubookborrowing@gmail.com, to: sherwindave.osma@evsu.edu.ph
+2026-05-28 11:34:29 - Detected HTML email
+2026-05-28 11:34:29 - Using provided alt body
+2026-05-28 11:34:29 - Attempting to send email via SMTP
+2026-05-28 11:34:32 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-05-28 11:34:48 - PHPMailer: INSTALLED
+2026-05-28 11:34:48 - Attempting to send email to: sherwindave.osma@evsu.edu.ph | Subject: EVSU Book Borrowing System - Book Return Receipt
+2026-05-28 11:34:48 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_113448_sherwindave_osma_evsu_edu_ph.txt
+2026-05-28 11:34:48 - PHPMailer detection check: FOUND
+2026-05-28 11:34:48 - SMTP not configured, using PHP mail() function
+2026-05-28 11:34:50 - PHP mail() failed, but email is saved to file
+2026-05-28 11:34:50 - Email status: FALLBACK SUCCESS (Saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_113448_sherwindave_osma_evsu_edu_ph.txt)
+2026-05-28 19:27:24 - PHPMailer: INSTALLED
+2026-05-28 19:49:55 - PHPMailer: INSTALLED
+2026-05-28 19:49:55 - Attempting to send email to: sherwindave.osma@evsu.edu.ph | Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+2026-05-28 19:49:55 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_194955_sherwindave_osma_evsu_edu_ph.txt
+2026-05-28 19:49:55 - PHPMailer detection check: FOUND
+2026-05-28 19:49:55 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-05-28 19:49:55 - Set from: evsubookborrowing@gmail.com, to: sherwindave.osma@evsu.edu.ph
+2026-05-28 19:49:55 - Detected HTML email
+2026-05-28 19:49:55 - Using provided alt body
+2026-05-28 19:49:55 - Attempting to send email via SMTP
+2026-05-28 19:49:59 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-05-28 20:30:30 - PHPMailer: INSTALLED
+2026-05-28 20:30:52 - PHPMailer: INSTALLED
+2026-05-28 20:30:52 - Attempting to send email to: miguelito.bacho@evsu.edu.ph | Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+2026-05-28 20:30:52 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_203052_miguelito_bacho_evsu_edu_ph.txt
+2026-05-28 20:30:52 - PHPMailer detection check: FOUND
+2026-05-28 20:30:52 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-05-28 20:30:52 - Set from: evsubookborrowing@gmail.com, to: miguelito.bacho@evsu.edu.ph
+2026-05-28 20:30:52 - Detected HTML email
+2026-05-28 20:30:52 - Using provided alt body
+2026-05-28 20:30:52 - Attempting to send email via SMTP
+2026-05-28 20:30:57 - Email status: SUCCESS (sent via PHPMailer SMTP)

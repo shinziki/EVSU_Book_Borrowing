@@ -118,6 +118,143 @@ function ensureTransactionsDueDateDateTime() {
     }
 }
 
+/**
+ * Ensure members.inactive_since exists (tracks when member became inactive).
+ */
+function ensureMemberInactiveSinceColumn() {
+    global $pdo;
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+
+    try {
+        $stmt = $pdo->query("SHOW COLUMNS FROM members LIKE 'inactive_since'");
+        if ($stmt->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE members ADD COLUMN inactive_since DATETIME DEFAULT NULL AFTER status");
+        }
+    } catch (PDOException $e) {
+        error_log('ensureMemberInactiveSinceColumn: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Reactivate a member (status=active, inactive_since=NULL).
+ */
+function reactivateMemberById($memberId) {
+    global $pdo;
+    if (!isset($pdo)) {
+        return false;
+    }
+    try {
+        ensureMemberStatusColumn();
+        ensureMemberInactiveSinceColumn();
+
+        $stmt = $pdo->prepare("UPDATE members SET status = 'active', inactive_since = NULL WHERE id = :id");
+        $stmt->bindParam(':id', $memberId, PDO::PARAM_INT);
+        return $stmt->execute();
+    } catch (PDOException $e) {
+        error_log('reactivateMemberById: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Auto-inactivate members who haven't borrowed within the last N minutes.
+ *
+ * Includes members who have never borrowed.
+ * Runs opportunistically (e.g. on admin page loads) and is throttled.
+ */
+function autoInactivateMembersWithoutRecentBorrow($minutes = 5, $throttleSeconds = 30) {
+    global $pdo;
+
+    if (!isset($pdo)) {
+        return 0;
+    }
+
+    $minutes = max(1, (int) $minutes);
+    $throttleSeconds = max(5, (int) $throttleSeconds);
+
+    $now = time();
+    $lastRun = (int) ($_SESSION['auto_inactivate_members_last_run'] ?? 0);
+    if ($lastRun > 0 && ($now - $lastRun) < $throttleSeconds) {
+        return 0;
+    }
+    $_SESSION['auto_inactivate_members_last_run'] = $now;
+
+    try {
+        ensureMemberStatusColumn();
+        ensureMemberInactiveSinceColumn();
+
+        $stmt = $pdo->prepare("
+            UPDATE members m
+            LEFT JOIN (
+                SELECT member_id, MAX(borrow_date) AS last_borrow
+                FROM transactions
+                GROUP BY member_id
+            ) t ON t.member_id = m.id
+            SET m.status = 'inactive',
+                m.inactive_since = IF(m.inactive_since IS NULL, NOW(), m.inactive_since)
+            WHERE m.status = 'active'
+              AND (t.last_borrow IS NULL OR t.last_borrow <= DATE_SUB(NOW(), INTERVAL :minutes MINUTE))
+        ");
+        $stmt->bindValue(':minutes', $minutes, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->rowCount();
+    } catch (PDOException $e) {
+        error_log('autoInactivateMembersWithoutRecentBorrow: ' . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Auto-inactivate members who haven't borrowed within the last N months.
+ */
+function autoInactivateMembersWithoutRecentBorrowMonths($months = 1, $throttleSeconds = 30) {
+    global $pdo;
+
+    if (!isset($pdo)) {
+        return 0;
+    }
+
+    $months = max(1, (int) $months);
+    $throttleSeconds = max(5, (int) $throttleSeconds);
+
+    $now = time();
+    $lastRun = (int) ($_SESSION['auto_inactivate_members_last_run'] ?? 0);
+    if ($lastRun > 0 && ($now - $lastRun) < $throttleSeconds) {
+        return 0;
+    }
+    $_SESSION['auto_inactivate_members_last_run'] = $now;
+
+    try {
+        ensureMemberStatusColumn();
+        ensureMemberInactiveSinceColumn();
+
+        $stmt = $pdo->prepare("
+            UPDATE members m
+            LEFT JOIN (
+                SELECT member_id, MAX(borrow_date) AS last_borrow
+                FROM transactions
+                GROUP BY member_id
+            ) t ON t.member_id = m.id
+            SET m.status = 'inactive',
+                m.inactive_since = IF(m.inactive_since IS NULL, NOW(), m.inactive_since)
+            WHERE m.status = 'active'
+              AND (t.last_borrow IS NULL OR t.last_borrow <= DATE_SUB(NOW(), INTERVAL :months MONTH))
+        ");
+        $stmt->bindValue(':months', $months, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->rowCount();
+    } catch (PDOException $e) {
+        error_log('autoInactivateMembersWithoutRecentBorrowMonths: ' . $e->getMessage());
+        return 0;
+    }
+}
+
 function getMemberStatusOptions() {
     return [
         'active' => 'Active',
@@ -493,6 +630,8 @@ function requireLogin() {
         exit;
     }
     ensureAdminRoleColumn();
+    // Housekeeping: auto-inactivate members with no borrow in last 1 month
+    autoInactivateMembersWithoutRecentBorrowMonths(1);
     if (!canAccessPage()) {
         setFlashMessage('You do not have permission to access that page.', 'error');
         header('Location: ' . getDefaultLandingPage());
@@ -826,6 +965,13 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 1, $paymentAmount = 0.
         if (!$member) {
             file_put_contents($logFile, date('Y-m-d H:i:s') . " - Member not found with barcode: $memberBarcode\n", FILE_APPEND);
             return false;
+        }
+
+        // If member is inactive (e.g., due to inactivity timeout or unpaid fees), reactivate on borrow attempt
+        if (($member['status'] ?? 'active') === 'inactive') {
+            reactivateMemberById((int) $member['id']);
+            $member['status'] = 'active';
+            $member['inactive_since'] = null;
         }
 
         if (!isMemberActive($member)) {
@@ -1356,6 +1502,176 @@ Thank you for using EVSU Book Borrowing System!";
         // Rollback transaction on error
         $pdo->rollBack();
         error_log("Error in returnBook: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Process returning a book by specific transaction ID.
+ * Useful when an ISBN matches multiple active borrows (quantity > 1).
+ */
+function returnBookByTransactionId($transactionId) {
+    global $pdo;
+
+    $transactionId = (int) $transactionId;
+    if ($transactionId <= 0) {
+        return false;
+    }
+
+    try {
+        // Start transaction
+        $pdo->beginTransaction();
+
+        // Load the exact active transaction and its book/member
+        $stmt = $pdo->prepare("
+            SELECT t.*, 
+                   b.id AS book_id, b.title AS book_title, b.author AS book_author, b.barcode AS book_barcode, b.status AS book_status,
+                   m.fullname, m.email, m.notifications_enabled
+            FROM transactions t
+            JOIN books b ON t.book_id = b.id
+            JOIN members m ON t.member_id = m.id
+            WHERE t.id = :id AND t.status IN ('Borrowed', 'Overdue', 'Needs Replacement')
+            LIMIT 1
+        ");
+        $stmt->bindParam(':id', $transactionId, PDO::PARAM_INT);
+        $stmt->execute();
+        $transaction = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$transaction) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        // Build $book and $transaction arrays compatible with existing logic
+        $book = [
+            'id' => (int) $transaction['book_id'],
+            'title' => $transaction['book_title'],
+            'author' => $transaction['book_author'],
+            'barcode' => $transaction['book_barcode'],
+            'status' => $transaction['book_status'],
+        ];
+
+        // Check if the book is overdue and calculate penalty
+        $dueDate = strtotime($transaction['due_date']);
+        $today = strtotime('today');
+        $hasPenalty = ($today > $dueDate);
+        $penaltyAmount = $hasPenalty ? calculateLateReturnPenalty($transaction) : 0;
+
+        // Get column names from transactions table to ensure we're using the right field name
+        $stmt = $pdo->query("DESCRIBE transactions");
+        $columns = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $columns[] = $row['Field'];
+        }
+
+        // Update transaction - use penalty_amount if late_fee doesn't exist
+        $hasPenaltyField = in_array('penalty_amount', $columns, true);
+        $hasLateFeeField = in_array('late_fee', $columns, true);
+
+        if ($hasLateFeeField) {
+            $stmt = $pdo->prepare("
+                UPDATE transactions 
+                SET status = 'Returned', 
+                    return_date = NOW(),
+                    late_fee = :penalty_amount
+                WHERE id = :id
+            ");
+        } else if ($hasPenaltyField) {
+            $stmt = $pdo->prepare("
+                UPDATE transactions 
+                SET status = 'Returned', 
+                    return_date = NOW(),
+                    penalty_amount = :penalty_amount
+                WHERE id = :id
+            ");
+        } else {
+            // If neither field exists, don't try to update it
+            $stmt = $pdo->prepare("
+                UPDATE transactions 
+                SET status = 'Returned', 
+                    return_date = NOW()
+                WHERE id = :id
+            ");
+        }
+
+        if ($hasLateFeeField || $hasPenaltyField) {
+            $stmt->bindParam(':penalty_amount', $penaltyAmount);
+        }
+        $stmt->bindParam(':id', $transactionId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        // Update book status and quantity/stock
+        $stmt = $pdo->query("DESCRIBE books");
+        $bookColumns = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $bookColumns[] = $row['Field'];
+        }
+
+        $hasQuantityField = in_array('quantity', $bookColumns, true);
+        $hasStockField = in_array('stock', $bookColumns, true);
+
+        // Reload current book row to get latest quantity/stock
+        $bookRow = getBookByBarcode($book['barcode']);
+
+        if ($hasQuantityField && $bookRow && isset($bookRow['quantity'])) {
+            $newQuantity = (int) $bookRow['quantity'] + 1;
+            $stmt = $pdo->prepare("
+                UPDATE books 
+                SET status = 'Available',
+                    quantity = :quantity_value
+                WHERE id = :id
+            ");
+            $stmt->bindParam(':quantity_value', $newQuantity, PDO::PARAM_INT);
+        } else if ($hasStockField && $bookRow && isset($bookRow['stock'])) {
+            $newStock = (int) $bookRow['stock'] + 1;
+            $stmt = $pdo->prepare("
+                UPDATE books 
+                SET status = 'Available',
+                    stock = :stock_value
+                WHERE id = :id
+            ");
+            $stmt->bindParam(':stock_value', $newStock, PDO::PARAM_INT);
+        } else {
+            $stmt = $pdo->prepare("
+                UPDATE books 
+                SET status = 'Available'
+                WHERE id = :id
+            ");
+        }
+        $stmt->bindParam(':id', $book['id'], PDO::PARAM_INT);
+        $stmt->execute();
+
+        // Create payment status based on overdue status
+        $paymentStatus = $hasPenalty ? 'Overdue Fee Pending' : 'Paid';
+
+        // Update payment status
+        $stmt = $pdo->prepare("
+            UPDATE transactions 
+            SET payment_status = :payment_status
+            WHERE id = :id
+        ");
+        $stmt->bindParam(':payment_status', $paymentStatus);
+        $stmt->bindParam(':id', $transactionId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        // Commit transaction
+        $pdo->commit();
+
+        return [
+            'book_id' => $book['id'],
+            'book_title' => $book['title'],
+            'member_id' => (int) $transaction['member_id'],
+            'transaction_id' => $transactionId,
+            'borrow_date' => $transaction['borrow_date'],
+            'due_date' => $transaction['due_date'],
+            'return_date' => date('Y-m-d H:i:s'),
+            'has_penalty' => $hasPenalty,
+            'penalty_amount' => $penaltyAmount,
+            'payment_status' => $paymentStatus
+        ];
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        error_log("Error in returnBookByTransactionId: " . $e->getMessage());
         return false;
     }
 }

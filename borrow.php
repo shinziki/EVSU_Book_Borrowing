@@ -288,10 +288,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         header('Location: borrow.php');
                         exit;
                     }
-                    $memberBarcode = $studentIdToSave;
-                } else {
-                    $memberBarcode = generateMemberBarcode();
                 }
+
+                // Always generate a MEMXXXX barcode (student_id is stored separately)
+                $memberBarcode = generateMemberBarcode();
 
                 // Add new member (default status active, notifications enabled)
                 $stmt = $pdo->prepare("
@@ -337,9 +337,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: borrow.php');
                 exit;
             } elseif (!isMemberActive($memberInfo)) {
-                setFlashMessage('This member is inactive and cannot borrow books.', 'error');
-                header('Location: borrow.php');
-                exit;
+                // Reactivate member when they try to borrow again
+                if (!empty($memberInfo['id'])) {
+                    reactivateMemberById((int) $memberInfo['id']);
+                    $memberInfo = getMemberByBarcode($memberBarcode);
+                }
+
+                if (!isMemberActive($memberInfo)) {
+                    setFlashMessage('This member is inactive and cannot borrow books.', 'error');
+                    header('Location: borrow.php');
+                    exit;
+                }
             }
         }
 

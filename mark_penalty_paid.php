@@ -50,6 +50,11 @@ $result = $stmt->execute();
 
 // Check if update was successful
 if ($result) {
+    // Reactivate member after penalty payment is recorded
+    if (!empty($transaction['member_id'])) {
+        reactivateMemberById((int) $transaction['member_id']);
+    }
+
     // Log the payment
     $logMessage = "Penalty for transaction #{$transactionId} marked as paid. ";
     $logMessage .= "Book: {$transaction['book_title']}, Member: {$transaction['member_name']}, ";

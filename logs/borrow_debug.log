@@ -58,3 +58,33 @@
 2026-05-28 00:12:59 - Transaction committed successfully
 2026-05-28 00:12:59 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph
 2026-05-28 00:13:04 - Email sending result: SUCCESS
+2026-05-28 11:34:29 - Starting borrowBook: book=9780062888433, member=2022-31958, days=1
+2026-05-28 11:34:29 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=3
+2026-05-28 11:34:29 - Member found: ID=1, Name=Sherwin Dave Osma
+2026-05-28 11:34:29 - Table columns: hasQuantity=No, hasStock=Yes
+2026-05-28 11:34:29 - Attempting to insert transaction record
+2026-05-28 11:34:29 - Transaction inserted successfully, ID: 1
+2026-05-28 11:34:29 - Updating book stock to 2, status to Available
+2026-05-28 11:34:29 - Transaction committed successfully
+2026-05-28 11:34:29 - Attempting to send email to: sherwindave.osma@evsu.edu.ph
+2026-05-28 11:34:32 - Email sending result: SUCCESS
+2026-05-28 19:49:55 - Starting borrowBook: book=9780062888433, member=MEM0001, days=1
+2026-05-28 19:49:55 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=3
+2026-05-28 19:49:55 - Member found: ID=2, Name=Sherwin Dave Osma
+2026-05-28 19:49:55 - Table columns: hasQuantity=No, hasStock=Yes
+2026-05-28 19:49:55 - Attempting to insert transaction record
+2026-05-28 19:49:55 - Transaction inserted successfully, ID: 2
+2026-05-28 19:49:55 - Updating book stock to 2, status to Available
+2026-05-28 19:49:55 - Transaction committed successfully
+2026-05-28 19:49:55 - Attempting to send email to: sherwindave.osma@evsu.edu.ph
+2026-05-28 19:49:59 - Email sending result: SUCCESS
+2026-05-28 20:30:52 - Starting borrowBook: book=9780062888433, member=MEM0002, days=1
+2026-05-28 20:30:52 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=2
+2026-05-28 20:30:52 - Member found: ID=3, Name=Miguelito Bacho
+2026-05-28 20:30:52 - Table columns: hasQuantity=No, hasStock=Yes
+2026-05-28 20:30:52 - Attempting to insert transaction record
+2026-05-28 20:30:52 - Transaction inserted successfully, ID: 3
+2026-05-28 20:30:52 - Updating book stock to 1, status to Available
+2026-05-28 20:30:52 - Transaction committed successfully
+2026-05-28 20:30:52 - Attempting to send email to: miguelito.bacho@evsu.edu.ph
+2026-05-28 20:30:57 - Email sending result: SUCCESS
