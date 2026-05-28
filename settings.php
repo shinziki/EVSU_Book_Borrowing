@@ -289,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'smtp_password' => $smtp_password,
             'smtp_encryption' => $smtp_encryption,
             'from_email' => $smtp_username,
-            'from_name' => 'Coffee Prince Library',
+            'from_name' => 'EVSU Book Borrowing System',
         ]);
         
         try {

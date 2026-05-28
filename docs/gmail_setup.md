@@ -1,4 +1,4 @@
-# Setting Up Gmail for Coffee Prince Library Notifications
+# Setting Up Gmail for EVSU Book Borrowing System Notifications
 
 Follow these steps to configure your Gmail account to send emails from the library application:
 
@@ -10,7 +10,7 @@ If you have 2-Factor Authentication (2FA) enabled on your Gmail account:
 2. Select **Security**
 3. Under "Signing in to Google," select **2-Step Verification**
 4. At the bottom of the page, select **App passwords**
-5. Enter a name to help you remember what this app password is for (e.g., "Coffee Prince Library")
+5. Enter a name to help you remember what this app password is for (e.g., "EVSU Book Borrowing System")
 6. Click **Create**
 7. Google will display a 16-character app password
 8. **Copy this password** - you will need it for the next step
@@ -30,7 +30,7 @@ $mail_config = [
     'smtp_username' => 'your_gmail_address@gmail.com',  // CHANGE THIS
     'smtp_password' => 'your_16_char_app_password',     // PASTE APP PASSWORD HERE
     'from_email' => 'your_gmail_address@gmail.com',     // CHANGE THIS
-    'from_name' => 'Coffee Prince Library'
+    'from_name' => 'EVSU Book Borrowing System'
 ];
 ```
 

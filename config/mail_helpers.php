@@ -33,7 +33,7 @@ function normalizeMailConfig(array $config) {
         $normalized['from_email'] = $config['smtp_username'];
     }
     if (empty($normalized['from_name'])) {
-        $normalized['from_name'] = 'Coffee Prince Library';
+        $normalized['from_name'] = 'EVSU Book Borrowing System';
     }
 
     $normalized['smtp_options'] = $config['smtp_options'] ?? [
@@ -152,12 +152,12 @@ function getLibraryEmailLogoPath() {
  */
 function buildMemberWelcomePlainText($fullname, $barcode) {
     $message = 'Dear ' . $fullname . ",\n\n";
-    $message .= "Welcome to the Coffee Prince Library! We're excited to have you as a member.\n\n";
+    $message .= "Welcome to the EVSU Book Borrowing System! We're excited to have you as a member.\n\n";
     $message .= "Your membership details:\n";
     $message .= 'Member ID: ' . $barcode . "\n\n";
     $message .= "You can use this barcode when borrowing books from our library.\n\n";
     $message .= "Thank you for joining our community!\n\n";
-    $message .= "Best regards,\nCoffee Prince Library Team";
+    $message .= "Best regards,\nEVSU Book Borrowing System Team";
     return $message;
 }
 
@@ -179,11 +179,11 @@ function buildMemberWelcomeHtml($fullname, $barcode, $logoSrc = '') {
     return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;color:#333;line-height:1.6;">'
         . $logo
         . '<p>Dear ' . $name . ',</p>'
-        . "<p>Welcome to the Coffee Prince Library! We're excited to have you as a member.</p>"
+        . "<p>Welcome to the EVSU Book Borrowing System! We're excited to have you as a member.</p>"
         . '<p>Your membership details:<br>Member ID: <strong>' . $id . '</strong></p>'
         . '<p>You can use this barcode when borrowing books from our library.</p>'
         . '<p>Thank you for joining our community!</p>'
-        . '<p>Best regards,<br>Coffee Prince Library Team</p>'
+        . '<p>Best regards,<br>EVSU Book Borrowing System Team</p>'
         . '</body></html>';
 }
 
@@ -197,7 +197,7 @@ function sendMemberWelcomeEmail($to, $fullname, $barcode) {
         require_once __DIR__ . '/phpmailer_loader.php';
     }
 
-    $subject = 'Welcome to Coffee Prince Library';
+    $subject = 'Welcome to EVSU Book Borrowing System';
     $plain = buildMemberWelcomePlainText($fullname, $barcode);
     $logoPath = getLibraryEmailLogoPath();
 

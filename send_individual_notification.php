@@ -53,7 +53,7 @@ try {
     $message .= "- Days overdue: " . $data['days_overdue'] . "\n";
     $message .= "- Late fee: " . number_format($penaltyAmount, 2) . " pesos\n\n";
     $message .= "Please return the book as soon as possible to avoid additional fees.\n\n";
-    $message .= "Thank you,\nCoffee Prince Library";
+    $message .= "Thank you,\nEVSU Book Borrowing System";
     
     // HTML version of the notification
     $htmlMessage = "<!DOCTYPE html>
@@ -73,7 +73,7 @@ try {
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>Coffee Prince Library</h1>
+            <h1>EVSU Book Borrowing System</h1>
             <p>Overdue Book Notice</p>
         </div>
         
@@ -94,7 +94,7 @@ try {
         
         <p>Please return the book as soon as possible to avoid additional fees.</p>
         
-        <p>Thank you,<br>Coffee Prince Library</p>
+        <p>Thank you,<br>EVSU Book Borrowing System</p>
     </div>
 </body>
 </html>";
@@ -105,7 +105,7 @@ try {
         // Send HTML email
         $subject = "OVERDUE NOTICE: " . $data['book_title'];
         $headers = "Content-Type: text/html; charset=UTF-8\r\n";
-        $headers .= "From: Coffee Prince Library <" . $mail_config['smtp_username'] . ">\r\n";
+        $headers .= "From: EVSU Book Borrowing System <" . $mail_config['smtp_username'] . ">\r\n";
         $emailSent = sendEmail($data['member_email'], $subject, $htmlMessage, $headers, $message);
     }
     

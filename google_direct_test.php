@@ -32,7 +32,7 @@ use PHPMailer\PHPMailer\Exception;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Process form submission
     $recipient = $_POST['recipient'] ?? $mail_config['smtp_username'];
-    $subject = $_POST['subject'] ?? 'Test Email from Coffee Prince Library';
+    $subject = $_POST['subject'] ?? 'Test Email from EVSU Book Borrowing System';
     $message = $_POST['message'] ?? 'This is a test email sent at ' . date('Y-m-d H:i:s');
     $port = (int)($_POST['port'] ?? $mail_config['smtp_port']);
     $secure = $_POST['secure'] ?? $mail_config['smtp_secure'];
@@ -77,9 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ob_start();
         
         // Set sender and recipient
-        $mail->setFrom($mail_config['smtp_username'], 'Coffee Prince Library');
+        $mail->setFrom($mail_config['smtp_username'], 'EVSU Book Borrowing System');
         $mail->addAddress($recipient);
-        $mail->addReplyTo($mail_config['smtp_username'], 'Coffee Prince Library');
+        $mail->addReplyTo($mail_config['smtp_username'], 'EVSU Book Borrowing System');
         
         // Set email content
         $mail->isHTML(true);
@@ -142,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <div style="margin-bottom: 15px;">
             <label for="subject" style="display: block; margin-bottom: 5px; font-weight: bold;">Subject:</label>
-            <input type="text" id="subject" name="subject" value="URGENT: Gmail Test from Coffee Prince Library <?php echo date('H:i:s'); ?>" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <input type="text" id="subject" name="subject" value="URGENT: Gmail Test from EVSU Book Borrowing System <?php echo date('H:i:s'); ?>" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
         </div>
         
         <div style="margin-bottom: 15px;">
@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 If you're reading this, the Gmail connection is working!
 
-From Coffee Prince Library</textarea>
+From EVSU Book Borrowing System</textarea>
         </div>
         
         <div style="margin-bottom: 15px; display: flex; gap: 15px;">

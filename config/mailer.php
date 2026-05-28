@@ -66,7 +66,7 @@ function sendEmail($to, $subject, $message, $headers = '', $altBody = '') {
     }
     
     // Extract sender info from headers or use defaults
-    $fromName = 'Coffee Prince Library';
+    $fromName = 'EVSU Book Borrowing System';
     $fromEmail = 'noreply@coffeeprincelibrary.com';
     
     // Use values from mail_config if they exist
@@ -342,7 +342,7 @@ function sendEmailViaBrevo($to, $subject, $message) {
     $apiKey = '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';
     
     // Set default values if mail_config is not set
-    $fromName = 'Coffee Prince Library';
+    $fromName = 'EVSU Book Borrowing System';
     $fromEmail = 'noreply@coffeeprincelibrary.com';
     
     // Use values from mail_config if they exist
@@ -435,7 +435,7 @@ function generateEmailHeaders($options = []) {
     $headers = "";
     
     // Set default values
-    $fromName = 'Coffee Prince Library';
+    $fromName = 'EVSU Book Borrowing System';
     $fromEmail = 'noreply@coffeeprincelibrary.com';
     
     // Use values from mail_config if they exist

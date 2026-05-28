@@ -11,7 +11,7 @@ if (!is_dir('emails')) {
 }
 
 // Function to save email as file (guaranteed to work)
-function saveEmailToFile($to, $subject, $message, $from = "Coffee Prince Library") {
+function saveEmailToFile($to, $subject, $message, $from = "EVSU Book Borrowing System") {
     $timestamp = date('Ymd_His');
     $safeEmail = str_replace(['@', '.', '+'], '_', $to);
     $filename = 'emails/email_' . $timestamp . '_' . $safeEmail . '.txt';
@@ -43,7 +43,7 @@ function saveEmailToFile($to, $subject, $message, $from = "Coffee Prince Library
 // Test sending an email
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $to = $_POST['email'];
-    $subject = $_POST['subject'] ?? "Test Email from Coffee Prince Library";
+    $subject = $_POST['subject'] ?? "Test Email from EVSU Book Borrowing System";
     $message = $_POST['message'] ?? "This is a test email sent at " . date('Y-m-d H:i:s') . "\n\n";
     $message .= $_POST['message'] ? "" : "If you received this email, your email system is working correctly.";
     
@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" id="subject" name="subject"
                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
                    value="<?php echo htmlspecialchars($_POST['subject'] ?? ''); ?>"
-                   placeholder="Test Email from Coffee Prince Library">
+                   placeholder="Test Email from EVSU Book Borrowing System">
         </div>
         
         <div style="margin-bottom: 15px;">

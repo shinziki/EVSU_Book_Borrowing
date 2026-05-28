@@ -6,6 +6,7 @@ require_once 'config/functions.php';
 requireLogin();
 ensureMemberCourseColumn();
 ensureMemberStatusColumn();
+ensureMemberStudentIdColumn();
 
 $canManageMembers = isAdmin() || staffHasPermission('members.edit');
 $courseOptions = getMemberCourseOptions();
@@ -95,7 +96,7 @@ if ($action === 'print_barcode' && $memberId) {
                     <svg class="barcode-large mx-auto" jsbarcode-format="CODE128" jsbarcode-value="<?php echo htmlspecialchars($memberData['barcode']); ?>" jsbarcode-textmargin="0" jsbarcode-height="80" jsbarcode-fontoptions="bold" jsbarcode-fontSize="16" jsbarcode-width="2"></svg>
                 </div>
                 
-                <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">Coffee Prince Library</p>
+                <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">EVSU Book Borrowing System</p>
             </div>
         </div>
         
@@ -156,6 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = $_POST['phone'] ?? '';
     $address = $_POST['address'] ?? '';
     $barcode = $_POST['barcode'] ?? '';
+    $studentId = trim($_POST['student_id'] ?? '');
     $course = trim($_POST['course'] ?? '');
     $memberStatus = $_POST['status'] ?? 'active';
     $notifications_enabled = isset($_POST['notifications_enabled']) ? 1 : 0;
@@ -194,6 +196,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
+            // Validate and store student ID
+            $studentIdToSave = !empty($studentId) ? $studentId : null;
+            if ($studentIdToSave !== null) {
+                if ($isEdit) {
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM members WHERE student_id = :student_id AND id != :id");
+                    $stmt->execute([':student_id' => $studentIdToSave, ':id' => $_POST['id']]);
+                } else {
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM members WHERE student_id = :student_id");
+                    $stmt->execute([':student_id' => $studentIdToSave]);
+                }
+                if ($stmt->fetchColumn() > 0) {
+                    setFlashMessage('A member with this Student ID already exists.', 'error');
+                    header('Location: members.php');
+                    exit;
+                }
+                // Use student ID as library barcode for scanning when provided
+                $barcode = $studentIdToSave;
+            }
+
             // If no barcode provided, generate one
             if (empty($barcode)) {
                 $barcode = generateMemberBarcode();
@@ -204,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_sql = "
                     UPDATE members 
                     SET fullname = :fullname, email = :email, phone = :phone, 
-                        address = :address, course = :course, status = :status, barcode = :barcode, 
+                        address = :address, course = :course, student_id = :student_id, status = :status, barcode = :barcode, 
                         notifications_enabled = :notifications_enabled
                 ";
                 
@@ -221,6 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bindParam(':phone', $phone);
                 $stmt->bindParam(':address', $address);
                 $stmt->bindParam(':course', $course);
+                $stmt->bindParam(':student_id', $studentIdToSave);
                 $stmt->bindParam(':status', $memberStatus);
                 $stmt->bindParam(':barcode', $barcode);
                 $stmt->bindParam(':notifications_enabled', $notifications_enabled);
@@ -242,14 +264,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Add new member
                 $stmt = $pdo->prepare("
-                    INSERT INTO members (fullname, email, phone, address, course, status, barcode, photo_path, notifications_enabled)
-                    VALUES (:fullname, :email, :phone, :address, :course, :status, :barcode, :photo_path, :notifications_enabled)
+                    INSERT INTO members (fullname, email, phone, address, course, student_id, status, barcode, photo_path, notifications_enabled)
+                    VALUES (:fullname, :email, :phone, :address, :course, :student_id, :status, :barcode, :photo_path, :notifications_enabled)
                 ");
                 $stmt->bindParam(':fullname', $fullname);
                 $stmt->bindParam(':email', $email);
                 $stmt->bindParam(':phone', $phone);
                 $stmt->bindParam(':address', $address);
                 $stmt->bindParam(':course', $course);
+                $stmt->bindParam(':student_id', $studentIdToSave);
                 $stmt->bindParam(':status', $memberStatus);
                 $stmt->bindParam(':barcode', $barcode);
                 $stmt->bindParam(':photo_path', $photo_path);
@@ -319,6 +342,7 @@ if ($search !== '') {
         OR email LIKE :search
         OR phone LIKE :search
         OR barcode LIKE :search
+        OR student_id LIKE :search
         OR address LIKE :search
         OR course LIKE :search
     )';
@@ -379,6 +403,15 @@ include 'includes/header.php';
                     <input type="email" id="email" name="email" required 
                            value="<?php echo ($memberData) ? htmlspecialchars($memberData['email']) : ''; ?>"
                            class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                </div>
+                
+                <div>
+                    <label for="student_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Student ID (Optional)</label>
+                    <input type="text" id="student_id" name="student_id"
+                           value="<?php echo ($memberData) ? htmlspecialchars($memberData['student_id'] ?? '') : ''; ?>"
+                           placeholder="e.g. 2021-12345"
+                           class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Must be unique if provided.</p>
                 </div>
                 
                 <div>
@@ -544,6 +577,7 @@ include 'includes/header.php';
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Member</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Contact</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Student ID</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Course</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Barcode</th>
@@ -574,6 +608,9 @@ include 'includes/header.php';
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($member['phone']); ?></div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                    <?php echo htmlspecialchars($member['student_id'] ?? '-'); ?>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
                                     <?php
@@ -618,7 +655,7 @@ include 'includes/header.php';
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No members found. Add a member to get started.</td>
+                            <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No members found. Add a member to get started.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

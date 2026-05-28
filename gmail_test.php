@@ -173,12 +173,12 @@ try {
     $mail->Body = "<h1>Gmail Connection Test</h1>
 <p>This is a test email sent at " . date('Y-m-d H:i:s') . "</p>
 <p>If you're seeing this, your Gmail SMTP configuration is working correctly!</p>
-<p>This test was generated from the Coffee Prince Library system.</p>";
+<p>This test was generated from the EVSU Book Borrowing System.</p>";
     
     $mail->AltBody = "Gmail Connection Test\n\n" .
                      "This is a test email sent at " . date('Y-m-d H:i:s') . "\n\n" .
                      "If you're seeing this, your Gmail SMTP configuration is working correctly!\n\n" .
-                     "This test was generated from the Coffee Prince Library system.";
+                     "This test was generated from the EVSU Book Borrowing System.";
     
     // Send the email
     if ($mail->send()) {

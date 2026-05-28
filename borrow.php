@@ -66,9 +66,9 @@ function sendBorrowingEmail($to, $subject, $htmlMessage, $plainTextMessage = '',
         ob_start();
         
         // Set sender and recipient
-        $mail->setFrom($mail_config['smtp_username'], 'Coffee Prince Library');
+        $mail->setFrom($mail_config['smtp_username'], 'EVSU Book Borrowing System');
         $mail->addAddress($to);
-        $mail->addReplyTo($mail_config['smtp_username'], 'Coffee Prince Library');
+        $mail->addReplyTo($mail_config['smtp_username'], 'EVSU Book Borrowing System');
         
         // Set content
         $mail->isHTML(true);
@@ -114,9 +114,9 @@ function sendBorrowingEmail($to, $subject, $htmlMessage, $plainTextMessage = '',
             ob_start();
             
             // Set sender and recipient (same as before)
-            $altMail->setFrom($mail_config['smtp_username'], 'Coffee Prince Library');
+            $altMail->setFrom($mail_config['smtp_username'], 'EVSU Book Borrowing System');
             $altMail->addAddress($to);
-            $altMail->addReplyTo($mail_config['smtp_username'], 'Coffee Prince Library');
+            $altMail->addReplyTo($mail_config['smtp_username'], 'EVSU Book Borrowing System');
             
             // Set content (same as before)
             $altMail->isHTML(true);
@@ -151,7 +151,7 @@ function sendBorrowingEmail($to, $subject, $htmlMessage, $plainTextMessage = '',
             // Try PHP's mail() function as last resort
             $headers = "MIME-Version: 1.0\r\n";
             $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-            $headers .= "From: Coffee Prince Library <{$mail_config['smtp_username']}>\r\n";
+            $headers .= "From: EVSU Book Borrowing System <{$mail_config['smtp_username']}>\r\n";
             $headers .= "Reply-To: {$mail_config['smtp_username']}\r\n";
             
             $mailResult = mail($to, $subject, $htmlMessage, $headers);
@@ -258,12 +258,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $paymentAmount = BORROW_PAYMENT_AMOUNT;
         
         if ($memberType === 'new') {
+            ensureMemberStudentIdColumn();
             $fullname = trim($_POST['fullname'] ?? '');
             $email = trim($_POST['email'] ?? '');
             $phone = trim($_POST['phone'] ?? '');
             $course = trim($_POST['course'] ?? '');
             $address = trim($_POST['address'] ?? '');
             $studentId = trim($_POST['student_id'] ?? '');
+            $studentIdToSave = !empty($studentId) ? $studentId : null;
             $courseOptions = getMemberCourseOptions();
 
             if (empty($fullname)) {
@@ -278,29 +280,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             try {
-                if (!empty($studentId)) {
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM members WHERE barcode = :barcode");
-                    $stmt->execute([':barcode' => $studentId]);
+                if ($studentIdToSave !== null) {
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM members WHERE student_id = :student_id");
+                    $stmt->execute([':student_id' => $studentIdToSave]);
                     if ($stmt->fetchColumn() > 0) {
                         setFlashMessage('A member with this Student ID already exists.', 'error');
                         header('Location: borrow.php');
                         exit;
                     }
-                    $memberBarcode = $studentId;
+                    $memberBarcode = $studentIdToSave;
                 } else {
                     $memberBarcode = generateMemberBarcode();
                 }
 
                 // Add new member (default status active, notifications enabled)
                 $stmt = $pdo->prepare("
-                    INSERT INTO members (fullname, email, phone, address, course, status, barcode, notifications_enabled)
-                    VALUES (:fullname, :email, :phone, :address, :course, 'active', :barcode, 1)
+                    INSERT INTO members (fullname, email, phone, address, course, student_id, status, barcode, notifications_enabled)
+                    VALUES (:fullname, :email, :phone, :address, :course, :student_id, 'active', :barcode, 1)
                 ");
                 $stmt->bindParam(':fullname', $fullname);
                 $stmt->bindParam(':email', $email);
                 $stmt->bindParam(':phone', $phone);
                 $stmt->bindParam(':address', $address);
                 $stmt->bindParam(':course', $course);
+                $stmt->bindParam(':student_id', $studentIdToSave);
                 $stmt->bindParam(':barcode', $memberBarcode);
                 $stmt->execute();
 
@@ -373,7 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $barcodeImage = generateBarcodeImage($transactionBarcode);
                 
                 // Create a detailed email receipt similar to borrow_receipt.php
-                $emailSubject = "Coffee Prince Library - Borrowing Receipt #" . $transactionData['id'];
+                $emailSubject = "EVSU Book Borrowing System - Borrowing Receipt #" . $transactionData['id'];
                 
                 // Start building HTML email content with styling
                 $emailMessage = "<!DOCTYPE html>
@@ -401,8 +404,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>Coffee Prince Library</h1>
-            <p>Book Borrowing Receipt</p>
+            <h1>EVSU Book Borrowing System</h1>
+            <p>Library Borrowing System</p>
             <p style='font-size: 0.9em; color: #777;'>Transaction #" . $transactionData['id'] . "</p>
         </div>
         
@@ -453,7 +456,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         
         <div class='footer'>
-            <p>Thank you for using Coffee Prince Library!</p>
+            <p>Thank you for using EVSU Book Borrowing System!</p>
             <p>This receipt was generated on " . date('Y-m-d H:i:s') . "</p>
         </div>
     </div>
@@ -461,7 +464,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </html>";
                 
                 // Also create a plain text version for email clients that don't support HTML
-                $plainTextMessage = "COFFEE PRINCE LIBRARY - BORROWING RECEIPT
+                $plainTextMessage = "EVSU Book Borrowing System - BORROWING RECEIPT
 Transaction #" . $transactionData['id'] . "
  
 DATE BORROWED: " . date('F j, Y, g:i A', strtotime($transactionData['borrow_date'])) . "
@@ -483,15 +486,15 @@ IMPORTANT NOTES:
 - For any inquiries, please contact the library staff.
 - Important: Please bring this receipt when returning the book.
  
-Thank you for using Coffee Prince Library!
+Thank you for using EVSU Book Borrowing System!
 This receipt was generated on " . date('Y-m-d H:i:s');
  
                 // Also create a simple notification for the database
                 $notificationType = 'Borrowed';
                 $notificationMessage = "Dear " . htmlspecialchars($memberInfo['fullname']) . ",\n\n";
-                $notificationMessage .= "You have borrowed the book '" . htmlspecialchars($_SESSION['borrow_book_info']['title']) . "' from Coffee Prince Library.\n";
+                $notificationMessage .= "You have borrowed the book '" . htmlspecialchars($_SESSION['borrow_book_info']['title']) . "' from EVSU Book Borrowing System.\n";
                 $notificationMessage .= "Due date: " . date('F j, Y, g:i A', strtotime($transactionData['due_date'])) . "\n\n";
-                $notificationMessage .= "Thank you for using Coffee Prince Library!\n";
+                $notificationMessage .= "Thank you for using EVSU Book Borrowing System!\n";
                 
                 // Record notification in database
                 $stmt = $pdo->prepare("

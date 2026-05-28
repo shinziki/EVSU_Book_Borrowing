@@ -1,6 +1,6 @@
 {
     "name": "coffee-prince/library",
-    "description": "Coffee Prince Library Management System",
+    "description": "EVSU Book Borrowing System",
     "type": "project",
     "require": {
         "phpmailer/phpmailer": "^6.5"

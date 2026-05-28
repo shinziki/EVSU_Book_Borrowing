@@ -32,7 +32,7 @@ if (!empty($search)) {
     $params[':search'] = "%$search%";
 }
 
-$query .= " ORDER BY t.borrow_date DESC";
+$query .= " ORDER BY t.borrow_date DESC, t.id DESC";
 
 // Prepare and execute query
 $stmt = $pdo->prepare($query);

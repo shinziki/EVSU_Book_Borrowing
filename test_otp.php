@@ -36,11 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $timestamp = date('Ymd_His');
                 $filename = 'emails/otp_' . $timestamp . '_' . str_replace(['@', '.'], '_', $email) . '.txt';
                 
-                $subject = "Coffee Prince Library - Test OTP Code";
+                $subject = "EVSU Book Borrowing System - Test OTP Code";
                 $message = "Dear " . htmlspecialchars($admin['fullname']) . ",\n\n";
                 $message .= "Your test verification code is: " . $otp . "\n\n";
                 $message .= "This code will expire in 10 minutes.\n\n";
-                $message .= "Thank you,\nCoffee Prince Library Team";
+                $message .= "Thank you,\nEVSU Book Borrowing System Team";
                 
                 $emailContent = "To: $email\nSubject: $subject\n\n$message";
                 
@@ -124,7 +124,7 @@ $emailFiles = array_slice($emailFiles, 0, 10); // Show only the 10 most recent f
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test OTP Functionality - Coffee Prince Library</title>
+    <title>Test OTP Functionality - EVSU Book Borrowing System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>

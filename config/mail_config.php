@@ -10,5 +10,5 @@ $mail_config = [
     'use_smtp' => true,
     'smtp_auth' => true,
     'from_email' => 'evsubookborrowing@gmail.com',
-    'from_name' => 'Coffee Prince Library'
+    'from_name' => 'EVSU Book Borrowing System'
 ];

@@ -11,7 +11,7 @@ echo "Testing Mailer Configuration...<br>";
 
 // Test sending an email
 $to = 'migsbacho04@gmail.com';
-$subject = 'Test Email from Coffee Prince Library';
+$subject = 'Test Email from EVSU Book Borrowing System';
 $message = "This is a test email sent at " . date('Y-m-d H:i:s') . "\n\n";
 $message .= "If you received this email, your email system is working correctly.";
 

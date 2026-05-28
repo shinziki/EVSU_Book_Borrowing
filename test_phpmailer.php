@@ -77,9 +77,9 @@ function sendTestEmail($to, $subject, $body, $host, $port, $secure, $username, $
         };
         
         // Recipients
-        $mail->setFrom($username, 'Coffee Prince Library');
+        $mail->setFrom($username, 'EVSU Book Borrowing System');
         $mail->addAddress($to);                                     // Add a recipient
-        $mail->addReplyTo($username, 'Coffee Prince Library');
+        $mail->addReplyTo($username, 'EVSU Book Borrowing System');
         
         // Content
         $mail->isHTML(false);                                       // Set email format to HTML
@@ -109,8 +109,8 @@ $connected = testSMTPConnection($host, $port, $secure, $username, $password);
 // Only try to send if connection test passed
 if ($connected) {
     // Prepare email content
-    $subject = 'Coffee Prince Library - SMTP Test';
-    $body = "This is a test email sent from Coffee Prince Library at " . date('Y-m-d H:i:s') . "\n\n";
+    $subject = 'EVSU Book Borrowing System - SMTP Test';
+    $body = "This is a test email sent from EVSU Book Borrowing System at " . date('Y-m-d H:i:s') . "\n\n";
     $body .= "If you received this email, your SMTP configuration is working correctly!";
     
     // Send test email

@@ -21,7 +21,7 @@ if (!is_dir('emails')) {
 // Test sending an email
 if (isset($_POST['email']) && !empty($_POST['email'])) {
     $to = $_POST['email'];
-    $subject = "Test Email from Coffee Prince Library via Brevo API";
+    $subject = "Test Email from EVSU Book Borrowing System via Brevo API";
     $message = "This is a test email sent using Brevo API at " . date('Y-m-d H:i:s') . "\n\n";
     $message .= "If you received this email, your email system is configured correctly using the Brevo API.";
     

@@ -86,7 +86,7 @@ function testBrevoAPI($to, $subject, $message) {
     $apiKey = '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';
     
     // Set default values if mail_config is not set
-    $fromName = 'Coffee Prince Library';
+    $fromName = 'EVSU Book Borrowing System';
     $fromEmail = 'noreply@coffeeprincelibrary.com';
     
     // Use values from mail_config if they exist
@@ -188,7 +188,7 @@ function testBrevoAPI($to, $subject, $message) {
 // Form for testing email
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['test_email'])) {
     $to = $_POST['email'];
-    $subject = "Test Email from Coffee Prince Library";
+    $subject = "Test Email from EVSU Book Borrowing System";
     $message = "This is a test email sent at " . date('Y-m-d H:i:s') . "\n\n";
     $message .= "If you received this email, your email system is working correctly.";
     
@@ -253,7 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['test_php_mail'])) {
     $to = $_POST['php_email'];
     $subject = "Test Email via PHP mail()";
     $message = "This is a test email sent using the PHP mail() function at " . date('Y-m-d H:i:s');
-    $headers = "From: Coffee Prince Library <noreply@example.com>\r\n";
+    $headers = "From: EVSU Book Borrowing System <noreply@example.com>\r\n";
     
     $result = @mail($to, $subject, $message, $headers);
     

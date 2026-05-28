@@ -50,8 +50,8 @@ include 'includes/header.php';
         <!-- Receipt content for printing -->
         <div id="receipt-content" class="max-w-2xl mx-auto">
             <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Coffee Prince Library</h1>
-                <p class="text-gray-600 dark:text-gray-400">Book Borrowing Receipt</p>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">EVSU Book Borrowing System</h1>
+                <p class="text-gray-600 dark:text-gray-400">Library Borrowing System</p>
                 <p class="text-sm text-gray-500 dark:text-gray-500">Transaction #<?php echo htmlspecialchars($receipt['transaction_id']); ?></p>
             </div>
 
@@ -106,7 +106,7 @@ include 'includes/header.php';
             </div>
 
             <div class="text-center text-sm text-gray-500 dark:text-gray-400 mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p>Thank you for using Coffee Prince Library!</p>
+                <p>Thank you for using EVSU Book Borrowing System!</p>
                 <p>This receipt was generated on <?php echo date('Y-m-d H:i:s'); ?></p>
             </div>
         </div>

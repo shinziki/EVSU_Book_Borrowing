@@ -1,6 +1,6 @@
 # EVSU Book Borrowing System
 
-A barcode-based library management system for Coffee Prince Library.
+A barcode-based library management system for EVSU Book Borrowing System.
 
 ## Features
 
@@ -42,7 +42,7 @@ $mail_config = [
     'smtp_username' => 'your_email@gmail.com', // Change to your email
     'smtp_password' => 'your_password',        // Change to your password or app password
     'from_email' => 'noreply@coffeeprincelibrary.com',
-    'from_name' => 'Coffee Prince Library'
+    'from_name' => 'EVSU Book Borrowing System'
 ];
 ```
 
@@ -111,7 +111,7 @@ This feature is especially useful for:
 
 ## Developers
 
-The Coffee Prince Library Management System was developed by:
+The EVSU Book Borrowing System was developed by:
 
 - Miguelito Bacho
 - Sherwin Dave Osma

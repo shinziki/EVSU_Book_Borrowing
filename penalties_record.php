@@ -44,6 +44,16 @@ include 'includes/header.php';
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 <?php if (count($penalties) > 0): ?>
                     <?php foreach ($penalties as $penalty): ?>
+                        <?php
+                            $displayStatus = $penalty['payment_status'];
+                            if (
+                                $penalty['payment_status'] === 'Penalty Fee Pending' &&
+                                in_array($penalty['penalty_type'], ['damaged', 'lost'], true)
+                            ) {
+                                $displayStatus = 'Needs Replacement';
+                            }
+                            $isPaid = ($penalty['payment_status'] === 'Paid' || $penalty['payment_status'] === 'Penalty Paid');
+                        ?>
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                 <?php echo date('M j, Y, g:i A', strtotime($penalty['return_date'])); ?>
@@ -68,14 +78,16 @@ include 'includes/header.php';
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    <?php echo ($penalty['payment_status'] === 'Paid' || $penalty['payment_status'] === 'Penalty Paid') ? 
+                                    <?php echo $isPaid ? 
                                         'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
-                                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; ?>">
-                                    <?php echo htmlspecialchars($penalty['payment_status']); ?>
+                                        ($displayStatus === 'Needs Replacement' ? 
+                                            'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 
+                                            'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'); ?>">
+                                    <?php echo htmlspecialchars($displayStatus); ?>
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <?php if ($penalty['payment_status'] !== 'Paid' && $penalty['payment_status'] !== 'Penalty Paid'): ?>
+                                <?php if (!$isPaid): ?>
                                     <a href="mark_penalty_paid.php?id=<?php echo $penalty['id']; ?>" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">Mark as Paid</a>
                                 <?php endif; ?>
                                 <a href="penalties.php?transaction_id=<?php echo $penalty['id']; ?>" class="ml-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">View Details</a>

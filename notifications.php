@@ -38,8 +38,8 @@ if (isset($_GET['action'])) {
     } elseif ($action === 'send_test_email') {
         $testEmail = $_POST['test_email'] ?? '';
         if (!empty($testEmail)) {
-            $subject = "Test Email from Coffee Prince Library";
-            $message = "This is a test email from Coffee Prince Library to verify email delivery is working correctly.\n\n";
+            $subject = "Test Email from EVSU Book Borrowing System";
+            $message = "This is a test email from EVSU Book Borrowing System to verify email delivery is working correctly.\n\n";
             $message .= "Time sent: " . date('Y-m-d H:i:s') . "\n";
             $message .= "If you received this email, your email system is configured correctly.";
             

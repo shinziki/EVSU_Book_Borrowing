@@ -232,7 +232,7 @@ function processBookPenalty($bookBarcode, $penaltyType) {
             
             $notificationMessage .= "Please pay this amount to the librarian at your earliest convenience.\n\n";
             $notificationMessage .= "Thank you for your understanding.\n";
-            $notificationMessage .= "Coffee Prince Library";
+            $notificationMessage .= "EVSU Book Borrowing System";
             
             // Record notification in database
             $stmt = $pdo->prepare("
@@ -246,7 +246,7 @@ function processBookPenalty($bookBarcode, $penaltyType) {
             $stmt->execute();
             
             // Send email
-            $emailSubject = "Coffee Prince Library - " . $notificationType;
+            $emailSubject = "EVSU Book Borrowing System - " . $notificationType;
             
             // Set HTML email content
             $htmlMessage = "<!DOCTYPE html>
@@ -267,7 +267,7 @@ function processBookPenalty($bookBarcode, $penaltyType) {
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>Coffee Prince Library</h1>
+            <h1>EVSU Book Borrowing System</h1>
             <p>" . ($penaltyType === 'damaged' ? 'Book Damaged Notification' : 'Book Lost Notification') . "</p>
         </div>
         
@@ -296,7 +296,7 @@ function processBookPenalty($bookBarcode, $penaltyType) {
         
         <div class='footer'>
             <p>Thank you for your understanding.</p>
-            <p>Coffee Prince Library</p>
+            <p>EVSU Book Borrowing System</p>
         </div>
     </div>
 </body>

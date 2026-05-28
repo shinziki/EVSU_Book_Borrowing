@@ -69,6 +69,55 @@ function ensureMemberStatusColumn() {
     }
 }
 
+/**
+ * Ensure members.student_id column exists.
+ */
+function ensureMemberStudentIdColumn() {
+    global $pdo;
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+    try {
+        $stmt = $pdo->query("SHOW COLUMNS FROM members LIKE 'student_id'");
+        if ($stmt->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE members ADD COLUMN student_id VARCHAR(50) DEFAULT NULL AFTER course");
+            $pdo->exec("UPDATE members SET student_id = barcode WHERE student_id IS NULL AND barcode IS NOT NULL AND barcode NOT LIKE 'MEM%'");
+        }
+    } catch (PDOException $e) {
+        error_log('ensureMemberStudentIdColumn: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Ensure transactions.due_date supports time (DATETIME).
+ * Needed so due dates can be exactly 24 hours from borrow time.
+ */
+function ensureTransactionsDueDateDateTime() {
+    global $pdo;
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+
+    try {
+        $stmt = $pdo->query("SHOW COLUMNS FROM transactions LIKE 'due_date'");
+        $col = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$col || !isset($col['Type'])) {
+            return;
+        }
+
+        $type = strtolower((string) $col['Type']);
+        if (str_starts_with($type, 'date') && !str_starts_with($type, 'datetime')) {
+            $pdo->exec("ALTER TABLE transactions MODIFY COLUMN due_date DATETIME NOT NULL");
+        }
+    } catch (PDOException $e) {
+        error_log('ensureTransactionsDueDateDateTime: ' . $e->getMessage());
+    }
+}
+
 function getMemberStatusOptions() {
     return [
         'active' => 'Active',
@@ -601,7 +650,8 @@ function getRecentActivities($limit = 3) {
         FROM transactions t
         JOIN books b ON t.book_id = b.id
         JOIN members m ON t.member_id = m.id
-        ORDER BY GREATEST(COALESCE(t.return_date, '1000-01-01'), t.borrow_date) DESC
+        -- Sort strictly by the most recent borrow (not by return time)
+        ORDER BY t.borrow_date DESC
         LIMIT :limit
     ");
     $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
@@ -690,11 +740,12 @@ function getBookByBarcode($barcode) {
  */
 function getMemberByBarcode($barcode) {
     global $pdo;
-    
-    $stmt = $pdo->prepare("SELECT * FROM members WHERE barcode = :barcode");
+    ensureMemberStudentIdColumn();
+
+    $stmt = $pdo->prepare("SELECT * FROM members WHERE barcode = :barcode OR student_id = :barcode");
     $stmt->bindParam(':barcode', $barcode);
     $stmt->execute();
-    
+
     return $stmt->fetch();
 }
 
@@ -825,8 +876,11 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 1, $paymentAmount = 0.
             }
         }
         
-        // Calculate due date
-        $dueDate = date('Y-m-d', strtotime("+$days days"));
+        // Ensure due_date supports time component (DATETIME)
+        ensureTransactionsDueDateDateTime();
+
+        // Calculate due date (exactly +N days from now, keeping time)
+        $dueDate = (new DateTimeImmutable('now'))->modify('+' . (int) $days . ' day')->format('Y-m-d H:i:s');
         
         // Insert transaction record
         $stmt = $pdo->prepare("
@@ -920,7 +974,7 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 1, $paymentAmount = 0.
 
         // Send email notification to member
         if (!empty($member['email'])) {
-            $subject = "Book Borrowed Confirmation - Coffee Prince Library";
+            $subject = "Book Borrowed Confirmation - EVSU Book Borrowing System";
             
             // Create HTML email content
             $htmlMessage = "<!DOCTYPE html>
@@ -937,13 +991,13 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 1, $paymentAmount = 0.
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>Coffee Prince Library</h1>
+            <h1>EVSU Book Borrowing System</h1>
             <p>Book Borrowed Confirmation</p>
         </div>
         
         <div class='section'>
             <p>Dear " . htmlspecialchars($member['fullname']) . ",</p>
-            <p>You have borrowed the following book from Coffee Prince Library:</p>
+            <p>You have borrowed the following book from EVSU Book Borrowing System:</p>
             
             <div class='info-box'>
                 <p><strong>Title:</strong> " . htmlspecialchars($book['title']) . "</p>
@@ -955,7 +1009,7 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 1, $paymentAmount = 0.
             <p>Please return the book on or before the due date to avoid penalties.</p>
             <p>Late returns may incur a penalty fee.</p>
             
-            <p>Thank you for using Coffee Prince Library!</p>
+            <p>Thank you for using EVSU Book Borrowing System!</p>
         </div>
     </div>
 </body>
@@ -963,14 +1017,14 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 1, $paymentAmount = 0.
             
             // Create plain text version
             $plainTextMessage = "Dear " . $member['fullname'] . ",\n\n";
-            $plainTextMessage .= "You have borrowed the following book from Coffee Prince Library:\n";
+            $plainTextMessage .= "You have borrowed the following book from EVSU Book Borrowing System:\n";
             $plainTextMessage .= "Title: " . $book['title'] . "\n";
             $plainTextMessage .= "Author: " . $book['author'] . "\n";
             $plainTextMessage .= "Borrow Date: " . date('F j, Y') . "\n";
             $plainTextMessage .= "Due Date: " . date('F j, Y', strtotime($dueDate)) . "\n\n";
             $plainTextMessage .= "Please return the book on or before the due date to avoid penalties.\n";
             $plainTextMessage .= "Late returns may incur a penalty fee.\n\n";
-            $plainTextMessage .= "Thank you for using Coffee Prince Library!\n";
+            $plainTextMessage .= "Thank you for using EVSU Book Borrowing System!\n";
             
             try {
                 // Use the mailer.php functions instead of borrowing-specific ones
@@ -1161,7 +1215,7 @@ function returnBook($bookBarcode) {
                 $notificationMessage .= "Please pay this amount to the librarian.\n\n";
             }
             
-            $notificationMessage .= "Thank you for using Coffee Prince Library!\n";
+            $notificationMessage .= "Thank you for using EVSU Book Borrowing System!\n";
             
             // Record notification in database
             $stmt = $pdo->prepare("
@@ -1190,7 +1244,7 @@ function returnBook($bookBarcode) {
                 require_once __DIR__ . '/mailer.php';
                 
                 // Set HTML email content
-                $emailSubject = "Coffee Prince Library - Book Return Receipt";
+                $emailSubject = "EVSU Book Borrowing System - Book Return Receipt";
                 $htmlMessage = "<!DOCTYPE html>
 <html>
 <head>
@@ -1210,7 +1264,7 @@ function returnBook($bookBarcode) {
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>Coffee Prince Library</h1>
+            <h1>EVSU Book Borrowing System</h1>
             <p>Book Return Receipt</p>
         </div>
         
@@ -1220,7 +1274,7 @@ function returnBook($bookBarcode) {
                 <p><span class='font-bold'>Book Title:</span> " . htmlspecialchars($book['title']) . "</p>
                 <p><span class='font-bold'>Author:</span> " . htmlspecialchars($book['author']) . "</p>
                 <p><span class='font-bold'>Date Borrowed:</span> " . date('F j, Y', strtotime($transaction['borrow_date'])) . "</p>
-                <p><span class='font-bold'>Due Date:</span> " . date('F j, Y', strtotime($transaction['due_date'])) . "</p>
+                <p><span class='font-bold'>Due Date:</span> " . date('F j, Y, g:i A', strtotime($transaction['due_date'])) . "</p>
                 <p><span class='font-bold'>Return Date:</span> " . date('F j, Y') . "</p>
             </div>
         </div>
@@ -1235,7 +1289,7 @@ function returnBook($bookBarcode) {
         </div>" : "") . "
         
         <div class='section text-center'>
-            <p>Thank you for using Coffee Prince Library!</p>
+            <p>Thank you for using EVSU Book Borrowing System!</p>
         </div>
     </div>
 </body>
@@ -1248,14 +1302,14 @@ RETURN INFORMATION:
 Book Title: " . $book['title'] . "
 Author: " . $book['author'] . "
 Date Borrowed: " . date('F j, Y', strtotime($transaction['borrow_date'])) . "
-Due Date: " . date('F j, Y', strtotime($transaction['due_date'])) . "
+Due Date: " . date('F j, Y, g:i A', strtotime($transaction['due_date'])) . "
 Return Date: " . date('F j, Y') . "
 " . ($hasPenalty ? "
 LATE RETURN FEE:
 A late fee of " . number_format($penaltyAmount, 2) . " pesos has been charged.
 Please pay this amount to the librarian.
 " : "") . "
-Thank you for using Coffee Prince Library!";
+Thank you for using EVSU Book Borrowing System!";
                 
                 // Try to send email
                 $isSent = sendEmail(
@@ -1330,7 +1384,7 @@ function updateOverdueBooks() {
             SELECT t.id, t.book_id, t.due_date, t.borrow_date, b.title 
             FROM transactions t
             JOIN books b ON t.book_id = b.id
-            WHERE t.status IN ('Borrowed', 'Overdue') AND t.due_date < CURRENT_DATE
+            WHERE t.status IN ('Borrowed', 'Overdue') AND t.due_date < NOW()
         ");
         $stmt->execute();
         $overdueBooks = $stmt->fetchAll();
@@ -1395,7 +1449,7 @@ function sendDueDateReminders($daysBeforeDue = 2) {
             JOIN books b ON t.book_id = b.id
             JOIN members m ON t.member_id = m.id
             WHERE t.status = 'Borrowed'
-            AND t.due_date BETWEEN CURRENT_DATE AND DATE_ADD(CURRENT_DATE, INTERVAL :days_before DAY)
+            AND t.due_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL :days_before DAY)
             AND m.notifications_enabled = 1
             AND m.email IS NOT NULL
         ");
@@ -1409,14 +1463,14 @@ function sendDueDateReminders($daysBeforeDue = 2) {
             $notificationType = 'Due Soon';
             $notificationMessage = "Dear " . htmlspecialchars($transaction['member_name']) . ",\n\n";
             $notificationMessage .= "This is a friendly reminder that the book '" . htmlspecialchars($transaction['book_title']) . "' is due soon.\n";
-            $notificationMessage .= "Due date: " . date('F j, Y', strtotime($transaction['due_date'])) . "\n\n";
+            $notificationMessage .= "Due date: " . date('F j, Y, g:i A', strtotime($transaction['due_date'])) . "\n\n";
             $notificationMessage .= "Please return the book on time to avoid penalty charges.\n";
             $notificationMessage .= "Late returns may incur a penalty fee.\n\n";
-            $notificationMessage .= "Thank you for using Coffee Prince Library!\n";
+            $notificationMessage .= "Thank you for using EVSU Book Borrowing System!\n";
             
             // Prepare email headers
-            $emailSubject = "Book Due Soon Reminder - Coffee Prince Library";
-            $emailHeaders = "From: Coffee Prince Library <noreply@coffeeprincelibrary.com>\r\n";
+            $emailSubject = "Book Due Soon Reminder - EVSU Book Borrowing System";
+            $emailHeaders = "From: EVSU Book Borrowing System <noreply@coffeeprincelibrary.com>\r\n";
             $emailHeaders .= "Content-Type: text/plain; charset=UTF-8\r\n";
             
             // Send email
@@ -1476,14 +1530,14 @@ function sendOverdueNotifications() {
             $notificationType = 'Overdue';
             $notificationMessage = "Dear " . htmlspecialchars($transaction['member_name']) . ",\n\n";
             $notificationMessage .= "The book '" . htmlspecialchars($transaction['book_title']) . "' is OVERDUE.\n";
-            $notificationMessage .= "Due date was: " . date('F j, Y', strtotime($transaction['due_date'])) . "\n";
+            $notificationMessage .= "Due date was: " . date('F j, Y, g:i A', strtotime($transaction['due_date'])) . "\n";
             $notificationMessage .= "Penalty amount: " . number_format($penaltyAmount, 2) . " pesos\n\n";
             $notificationMessage .= "Please return the book as soon as possible and settle the penalty.\n\n";
             $notificationMessage .= "Thank you for your cooperation.\n";
             
             // Prepare email headers
-            $emailSubject = "OVERDUE BOOK NOTICE - Coffee Prince Library";
-            $emailHeaders = "From: Coffee Prince Library <noreply@coffeeprincelibrary.com>\r\n";
+            $emailSubject = "OVERDUE BOOK NOTICE - EVSU Book Borrowing System";
+            $emailHeaders = "From: EVSU Book Borrowing System <noreply@coffeeprincelibrary.com>\r\n";
             $emailHeaders .= "Content-Type: text/plain; charset=UTF-8\r\n";
             
             // Send email
@@ -1685,12 +1739,12 @@ function sendOTPEmail($email, $fullname) {
     }
     
     // Prepare email content
-    $subject = "Coffee Prince Library - Your Login Verification Code";
+    $subject = "EVSU Book Borrowing System - Your Login Verification Code";
     $message = "Dear " . htmlspecialchars($fullname) . ",\n\n";
-    $message .= "Your verification code for logging into Coffee Prince Library is: " . $otp . "\n\n";
+    $message .= "Your verification code for logging into EVSU Book Borrowing System is: " . $otp . "\n\n";
     $message .= "This code will expire in 10 minutes.\n\n";
     $message .= "If you didn't request this code, please ignore this email or contact support.\n\n";
-    $message .= "Thank you,\nCoffee Prince Library Team";
+    $message .= "Thank you,\nEVSU Book Borrowing System Team";
     
     // Also save email to file as backup
     $timestamp = date('Ymd_His');

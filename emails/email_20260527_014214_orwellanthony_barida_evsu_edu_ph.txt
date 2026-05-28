@@ -1,0 +1,48 @@
+To: orwellanthony.barida@evsu.edu.ph
+From: Coffee Prince Library <noreply@coffeeprincelibrary.com>
+Subject: Coffee Prince Library - Book Return Receipt
+Headers: Content-Type: text/html; charset=UTF-8
+Date: 2026-05-27 01:42:14
+-------------------------------------------
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; line-height: 1.5; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { margin-bottom: 5px; color: #333; }
+        .section { margin-bottom: 20px; }
+        .section h3 { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .info-box { background-color: #f9f9f9; padding: 10px; border-radius: 4px; }
+        .font-bold { font-weight: bold; }
+        .text-center { text-align: center; }
+        
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>Coffee Prince Library</h1>
+            <p>Book Return Receipt</p>
+        </div>
+        
+        <div class='section'>
+            <h3>Return Information</h3>
+            <div class='info-box'>
+                <p><span class='font-bold'>Book Title:</span> Everything is Fucked</p>
+                <p><span class='font-bold'>Author:</span> Mark Manson</p>
+                <p><span class='font-bold'>Date Borrowed:</span> May 27, 2026</p>
+                <p><span class='font-bold'>Due Date:</span> May 28, 2026</p>
+                <p><span class='font-bold'>Return Date:</span> May 27, 2026</p>
+            </div>
+        </div>
+        
+        
+        
+        <div class='section text-center'>
+            <p>Thank you for using Coffee Prince Library!</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -37,7 +37,7 @@ try {
     
     // Content
     $mail->isHTML(true);
-    $mail->Subject = 'Test Email from Coffee Prince Library ' . date('Y-m-d H:i:s');
+    $mail->Subject = 'Test Email from EVSU Book Borrowing System ' . date('Y-m-d H:i:s');
     $mail->Body    = '<h2>This is a test email</h2><p>Sent at ' . date('Y-m-d H:i:s') . '</p>';
     $mail->AltBody = 'This is a test email. Sent at ' . date('Y-m-d H:i:s');
     

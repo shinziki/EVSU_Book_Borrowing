@@ -1,6 +1,6 @@
-# Coffee Prince Library Management System Setup Guide
+# EVSU Book Borrowing System Setup Guide
 
-This guide will help you set up the Coffee Prince Library Management System on your local environment.
+This guide will help you set up the EVSU Book Borrowing System on your local environment.
 
 ## Prerequisites
 
@@ -52,7 +52,7 @@ Before you begin, make sure you have the following installed:
        'smtp_username' => 'your_email@gmail.com', // Change to your email
        'smtp_password' => 'your_password',        // Change to your password or app password
        'from_email' => 'noreply@coffeeprincelibrary.com',
-       'from_name' => 'Coffee Prince Library'
+       'from_name' => 'EVSU Book Borrowing System'
    ];
    ```
 
@@ -150,7 +150,7 @@ For local development or testing:
 
 ## System Creators
 
-The Coffee Prince Library Management System was developed by:
+The EVSU Book Borrowing System was developed by:
 
 - Miguelito Bacho
 - Nicole Cretecio

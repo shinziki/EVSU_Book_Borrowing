@@ -1,0 +1,103 @@
+2026-05-27 01:33:19 - PHPMailer: INSTALLED
+2026-05-27 01:33:19 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: Book Borrowed Confirmation - Coffee Prince Library
+2026-05-27 01:33:19 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_013319_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-27 01:33:19 - PHPMailer detection check: FOUND
+2026-05-27 01:33:19 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-05-27 01:33:19 - Set from: evsubookborrowing@gmail.com, to: orwellanthony.barida@evsu.edu.ph
+2026-05-27 01:33:19 - Detected HTML email
+2026-05-27 01:33:19 - Using provided alt body
+2026-05-27 01:33:19 - Attempting to send email via SMTP
+2026-05-27 01:33:23 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-05-27 01:33:41 - PHPMailer: INSTALLED
+2026-05-27 01:33:41 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: Coffee Prince Library - Book Return Receipt
+2026-05-27 01:33:41 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_013341_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-27 01:33:41 - PHPMailer detection check: FOUND
+2026-05-27 01:33:41 - SMTP not configured, using PHP mail() function
+2026-05-27 01:33:43 - PHP mail() failed, but email is saved to file
+2026-05-27 01:33:43 - Email status: FALLBACK SUCCESS (Saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_013341_orwellanthony_barida_evsu_edu_ph.txt)
+2026-05-27 01:41:25 - PHPMailer: INSTALLED
+2026-05-27 01:41:25 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: Book Borrowed Confirmation - Coffee Prince Library
+2026-05-27 01:41:25 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_014125_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-27 01:41:25 - PHPMailer detection check: FOUND
+2026-05-27 01:41:25 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-05-27 01:41:25 - Set from: evsubookborrowing@gmail.com, to: orwellanthony.barida@evsu.edu.ph
+2026-05-27 01:41:25 - Detected HTML email
+2026-05-27 01:41:25 - Using provided alt body
+2026-05-27 01:41:25 - Attempting to send email via SMTP
+2026-05-27 01:41:28 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-05-27 01:42:14 - PHPMailer: INSTALLED
+2026-05-27 01:42:14 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: Coffee Prince Library - Book Return Receipt
+2026-05-27 01:42:14 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_014214_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-27 01:42:14 - PHPMailer detection check: FOUND
+2026-05-27 01:42:14 - SMTP not configured, using PHP mail() function
+2026-05-27 01:42:16 - PHP mail() failed, but email is saved to file
+2026-05-27 01:42:16 - Email status: FALLBACK SUCCESS (Saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_014214_orwellanthony_barida_evsu_edu_ph.txt)
+2026-05-27 01:47:11 - PHPMailer: INSTALLED
+2026-05-27 01:47:11 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+2026-05-27 01:47:11 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_014711_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-27 01:47:11 - PHPMailer detection check: FOUND
+2026-05-27 01:47:11 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-05-27 01:47:11 - Set from: evsubookborrowing@gmail.com, to: orwellanthony.barida@evsu.edu.ph
+2026-05-27 01:47:11 - Detected HTML email
+2026-05-27 01:47:11 - Using provided alt body
+2026-05-27 01:47:11 - Attempting to send email via SMTP
+2026-05-27 01:47:15 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-05-27 01:48:06 - PHPMailer: INSTALLED
+2026-05-27 01:48:06 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: EVSU Book Borrowing System - Book Return Receipt
+2026-05-27 01:48:06 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_014806_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-27 01:48:06 - PHPMailer detection check: FOUND
+2026-05-27 01:48:06 - SMTP not configured, using PHP mail() function
+2026-05-27 01:48:08 - PHP mail() failed, but email is saved to file
+2026-05-27 01:48:08 - Email status: FALLBACK SUCCESS (Saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_014806_orwellanthony_barida_evsu_edu_ph.txt)
+2026-05-27 01:49:03 - PHPMailer: INSTALLED
+2026-05-27 01:49:03 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+2026-05-27 01:49:03 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_014903_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-27 01:49:03 - PHPMailer detection check: FOUND
+2026-05-27 01:49:03 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-05-27 01:49:03 - Set from: evsubookborrowing@gmail.com, to: orwellanthony.barida@evsu.edu.ph
+2026-05-27 01:49:03 - Detected HTML email
+2026-05-27 01:49:03 - Using provided alt body
+2026-05-27 01:49:03 - Attempting to send email via SMTP
+2026-05-27 01:49:06 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-05-27 01:54:34 - PHPMailer: INSTALLED
+2026-05-27 01:54:34 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: EVSU Book Borrowing System - Book Return Receipt
+2026-05-27 01:54:34 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_015434_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-27 01:54:34 - PHPMailer detection check: FOUND
+2026-05-27 01:54:34 - SMTP not configured, using PHP mail() function
+2026-05-27 01:54:36 - PHP mail() failed, but email is saved to file
+2026-05-27 01:54:36 - Email status: FALLBACK SUCCESS (Saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_015434_orwellanthony_barida_evsu_edu_ph.txt)
+2026-05-27 01:54:43 - PHPMailer: INSTALLED
+2026-05-27 01:54:43 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+2026-05-27 01:54:43 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260527_015443_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-27 01:54:43 - PHPMailer detection check: FOUND
+2026-05-27 01:54:43 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-05-27 01:54:43 - Set from: evsubookborrowing@gmail.com, to: orwellanthony.barida@evsu.edu.ph
+2026-05-27 01:54:43 - Detected HTML email
+2026-05-27 01:54:43 - Using provided alt body
+2026-05-27 01:54:43 - Attempting to send email via SMTP
+2026-05-27 01:54:47 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-05-27 02:20:56 - PHPMailer: INSTALLED
+2026-05-28 00:12:59 - PHPMailer: INSTALLED
+2026-05-28 00:12:59 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+2026-05-28 00:12:59 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_001259_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-28 00:12:59 - PHPMailer detection check: FOUND
+2026-05-28 00:12:59 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-05-28 00:12:59 - Set from: evsubookborrowing@gmail.com, to: orwellanthony.barida@evsu.edu.ph
+2026-05-28 00:12:59 - Detected HTML email
+2026-05-28 00:13:00 - Using provided alt body
+2026-05-28 00:13:00 - Attempting to send email via SMTP
+2026-05-28 00:13:04 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-05-28 00:13:25 - PHPMailer: INSTALLED
+2026-05-28 00:13:25 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: EVSU Book Borrowing System - Book Return Receipt
+2026-05-28 00:13:25 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_001325_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-28 00:13:25 - PHPMailer detection check: FOUND
+2026-05-28 00:13:25 - SMTP not configured, using PHP mail() function
+2026-05-28 00:13:27 - PHP mail() failed, but email is saved to file
+2026-05-28 00:13:27 - Email status: FALLBACK SUCCESS (Saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_001325_orwellanthony_barida_evsu_edu_ph.txt)
+2026-05-28 00:14:01 - PHPMailer: INSTALLED
+2026-05-28 00:14:01 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph | Subject: EVSU Book Borrowing System - Book Return Receipt
+2026-05-28 00:14:01 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_001401_orwellanthony_barida_evsu_edu_ph.txt
+2026-05-28 00:14:01 - PHPMailer detection check: FOUND
+2026-05-28 00:14:01 - SMTP not configured, using PHP mail() function
+2026-05-28 00:14:03 - PHP mail() failed, but email is saved to file
+2026-05-28 00:14:03 - Email status: FALLBACK SUCCESS (Saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260528_001401_orwellanthony_barida_evsu_edu_ph.txt)

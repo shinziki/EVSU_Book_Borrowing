@@ -80,7 +80,7 @@ if ($action === 'print_barcode' && $bookId) {
                     <svg class="barcode-large mx-auto" jsbarcode-format="CODE128" jsbarcode-value="<?php echo htmlspecialchars($bookData['barcode']); ?>" jsbarcode-textmargin="0" jsbarcode-height="80" jsbarcode-fontoptions="bold" jsbarcode-fontSize="16" jsbarcode-width="2"></svg>
                 </div>
                 
-                <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">Coffee Prince Library</p>
+                <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">EVSU Book Borrowing System</p>
             </div>
         </div>
         
@@ -260,11 +260,56 @@ if ($action === 'edit' && $bookId) {
 $search = $_GET['search'] ?? '';
 $availability = $_GET['availability'] ?? (isStaff() && !$canManageBooks ? 'available' : 'all');
 
+$canStaffBrowseByGenre = isStaff() && staffHasPermission('books.view');
+$selectedGenre = '';
+$bookSortKey = $_GET['book_sort'] ?? 'title_asc';
+$genres = [];
+
+// Whitelist sorting options
+$sortOrderMap = [
+    'title_asc' => 'title ASC, id DESC',
+    'title_desc' => 'title DESC, id DESC',
+    'newest' => 'created_at DESC, id DESC',
+    'availability' => 'stock DESC, title ASC, id DESC',
+];
+
+if ($canStaffBrowseByGenre) {
+    // Load available genres for dropdown
+    $stmt = $pdo->query("
+        SELECT DISTINCT category
+        FROM books
+        WHERE category IS NOT NULL AND category <> ''
+        ORDER BY category ASC
+    ");
+    $genres = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    // Validate selected genre value
+    $candidateGenre = $_GET['genre'] ?? '';
+    if (!empty($candidateGenre) && in_array($candidateGenre, $genres, true)) {
+        $selectedGenre = $candidateGenre;
+    }
+
+    // Validate sort key
+    if (!isset($sortOrderMap[$bookSortKey])) {
+        $bookSortKey = 'title_asc';
+    }
+} else {
+    // Keep a predictable default order for non-staff browsing
+    if (!isset($sortOrderMap[$bookSortKey])) {
+        $bookSortKey = 'title_asc';
+    }
+}
+
 $where = [];
 $params = [];
 
 if ($availability === 'available') {
     $where[] = 'stock > 0';
+}
+
+if ($canStaffBrowseByGenre && !empty($selectedGenre)) {
+    $where[] = 'category = :category';
+    $params[':category'] = $selectedGenre;
 }
 
 if (!empty($search)) {
@@ -276,7 +321,7 @@ $sql = 'SELECT * FROM books';
 if (!empty($where)) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
-$sql .= ' ORDER BY title';
+$sql .= ' ORDER BY ' . ($sortOrderMap[$bookSortKey] ?? $sortOrderMap['title_asc']);
 
 $stmt = $pdo->prepare($sql);
 foreach ($params as $key => $value) {
@@ -412,6 +457,35 @@ include 'includes/header.php';
                 </select>
             </div>
             <?php endif; ?>
+
+            <?php if ($canStaffBrowseByGenre): ?>
+            <div class="w-full sm:w-auto">
+                <label for="genre" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Genre</label>
+                <select id="genre" name="genre"
+                        onchange="this.form.submit()"
+                        class="w-full sm:w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white">
+                    <option value="" <?php echo empty($selectedGenre) ? 'selected' : ''; ?>>All Genres</option>
+                    <?php foreach ($genres as $genre): ?>
+                        <option value="<?php echo htmlspecialchars($genre); ?>" <?php echo ($genre === $selectedGenre) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($genre); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="w-full sm:w-auto">
+                <label for="book_sort" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort</label>
+                <select id="book_sort" name="book_sort"
+                        onchange="this.form.submit()"
+                        class="w-full sm:w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white">
+                    <option value="title_asc" <?php echo $bookSortKey === 'title_asc' ? 'selected' : ''; ?>>Title (A-Z)</option>
+                    <option value="title_desc" <?php echo $bookSortKey === 'title_desc' ? 'selected' : ''; ?>>Title (Z-A)</option>
+                    <option value="newest" <?php echo $bookSortKey === 'newest' ? 'selected' : ''; ?>>Newest</option>
+                    <option value="availability" <?php echo $bookSortKey === 'availability' ? 'selected' : ''; ?>>Availability</option>
+                </select>
+            </div>
+            <?php endif; ?>
+
             <div class="flex-1 min-w-[200px]">
                 <input type="text" name="search" placeholder="Search by title, author, ISBN, category or barcode..." 
                     value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>"
@@ -424,7 +498,20 @@ include 'includes/header.php';
             </div>
             <?php if (isset($_GET['search']) && !empty($_GET['search'])): ?>
                 <div>
-                    <a href="books.php<?php echo (isStaff() && !$canManageBooks) ? '?availability=' . urlencode($availability) : ''; ?>" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center">
+                    <?php
+                        $clearParams = [];
+                        if (isStaff() && !$canManageBooks) {
+                            $clearParams['availability'] = $availability;
+                        }
+                        if ($canStaffBrowseByGenre && !empty($selectedGenre)) {
+                            $clearParams['genre'] = $selectedGenre;
+                        }
+                        if ($canStaffBrowseByGenre) {
+                            $clearParams['book_sort'] = $bookSortKey;
+                        }
+                        $clearQueryString = !empty($clearParams) ? ('?' . http_build_query($clearParams)) : '';
+                    ?>
+                    <a href="books.php<?php echo htmlspecialchars($clearQueryString); ?>" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center">
                         <i class="fas fa-times mr-2"></i> Clear
                     </a>
                 </div>
@@ -437,6 +524,8 @@ include 'includes/header.php';
             <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
                 <?php if (!empty($search)): ?>
                     Search Results
+                <?php elseif ($canStaffBrowseByGenre && !empty($selectedGenre)): ?>
+                    Books in "<?php echo htmlspecialchars($selectedGenre); ?>"
                 <?php elseif ($availability === 'available'): ?>
                     Available Books
                 <?php else: ?>

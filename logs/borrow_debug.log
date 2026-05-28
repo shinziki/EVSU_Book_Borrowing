@@ -1,0 +1,60 @@
+2026-05-27 01:33:19 - Starting borrowBook: book=9780062888433, member=MEM2013, days=1
+2026-05-27 01:33:19 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=3
+2026-05-27 01:33:19 - Member found: ID=20, Name=Orwell Barida
+2026-05-27 01:33:19 - Table columns: hasQuantity=No, hasStock=Yes
+2026-05-27 01:33:19 - Attempting to insert transaction record
+2026-05-27 01:33:19 - Transaction inserted successfully, ID: 57
+2026-05-27 01:33:19 - Updating book stock to 2, status to Available
+2026-05-27 01:33:19 - Transaction committed successfully
+2026-05-27 01:33:19 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph
+2026-05-27 01:33:23 - Email sending result: SUCCESS
+2026-05-27 01:41:25 - Starting borrowBook: book=9780062888433, member=MEM2013, days=1
+2026-05-27 01:41:25 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=3
+2026-05-27 01:41:25 - Member found: ID=20, Name=Orwell Barida
+2026-05-27 01:41:25 - Table columns: hasQuantity=No, hasStock=Yes
+2026-05-27 01:41:25 - Attempting to insert transaction record
+2026-05-27 01:41:25 - Transaction inserted successfully, ID: 58
+2026-05-27 01:41:25 - Updating book stock to 2, status to Available
+2026-05-27 01:41:25 - Transaction committed successfully
+2026-05-27 01:41:25 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph
+2026-05-27 01:41:28 - Email sending result: SUCCESS
+2026-05-27 01:47:11 - Starting borrowBook: book=9780062888433, member=MEM2013, days=1
+2026-05-27 01:47:11 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=3
+2026-05-27 01:47:11 - Member found: ID=20, Name=Orwell Barida
+2026-05-27 01:47:11 - Table columns: hasQuantity=No, hasStock=Yes
+2026-05-27 01:47:11 - Attempting to insert transaction record
+2026-05-27 01:47:11 - Transaction inserted successfully, ID: 59
+2026-05-27 01:47:11 - Updating book stock to 2, status to Available
+2026-05-27 01:47:11 - Transaction committed successfully
+2026-05-27 01:47:11 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph
+2026-05-27 01:47:15 - Email sending result: SUCCESS
+2026-05-27 01:49:03 - Starting borrowBook: book=9780062888433, member=MEM2013, days=1
+2026-05-27 01:49:03 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=3
+2026-05-27 01:49:03 - Member found: ID=20, Name=Orwell Barida
+2026-05-27 01:49:03 - Table columns: hasQuantity=No, hasStock=Yes
+2026-05-27 01:49:03 - Attempting to insert transaction record
+2026-05-27 01:49:03 - Transaction inserted successfully, ID: 60
+2026-05-27 01:49:03 - Updating book stock to 2, status to Available
+2026-05-27 01:49:03 - Transaction committed successfully
+2026-05-27 01:49:03 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph
+2026-05-27 01:49:06 - Email sending result: SUCCESS
+2026-05-27 01:54:43 - Starting borrowBook: book=9780062888433, member=MEM2013, days=1
+2026-05-27 01:54:43 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=3
+2026-05-27 01:54:43 - Member found: ID=20, Name=Orwell Barida
+2026-05-27 01:54:43 - Table columns: hasQuantity=No, hasStock=Yes
+2026-05-27 01:54:43 - Attempting to insert transaction record
+2026-05-27 01:54:43 - Transaction inserted successfully, ID: 61
+2026-05-27 01:54:43 - Updating book stock to 2, status to Available
+2026-05-27 01:54:43 - Transaction committed successfully
+2026-05-27 01:54:43 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph
+2026-05-27 01:54:47 - Email sending result: SUCCESS
+2026-05-28 00:12:59 - Starting borrowBook: book=9780062888433, member=MEM2013, days=1
+2026-05-28 00:12:59 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=2
+2026-05-28 00:12:59 - Member found: ID=20, Name=Orwell Barida
+2026-05-28 00:12:59 - Table columns: hasQuantity=No, hasStock=Yes
+2026-05-28 00:12:59 - Attempting to insert transaction record
+2026-05-28 00:12:59 - Transaction inserted successfully, ID: 62
+2026-05-28 00:12:59 - Updating book stock to 1, status to Available
+2026-05-28 00:12:59 - Transaction committed successfully
+2026-05-28 00:12:59 - Attempting to send email to: orwellanthony.barida@evsu.edu.ph
+2026-05-28 00:13:04 - Email sending result: SUCCESS
