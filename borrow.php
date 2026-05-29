@@ -497,23 +497,6 @@ IMPORTANT NOTES:
 Thank you for using EVSU Book Borrowing System!
 This receipt was generated on " . date('Y-m-d H:i:s');
  
-                // Also create a simple notification for the database
-                $notificationType = 'Borrowed';
-                $notificationMessage = "Dear " . htmlspecialchars($memberInfo['fullname']) . ",\n\n";
-                $notificationMessage .= "You have borrowed the book '" . htmlspecialchars($_SESSION['borrow_book_info']['title']) . "' from EVSU Book Borrowing System.\n";
-                $notificationMessage .= "Due date: " . date('F j, Y, g:i A', strtotime($transactionData['due_date'])) . "\n\n";
-                $notificationMessage .= "Thank you for using EVSU Book Borrowing System!\n";
-                
-                // Record notification in database
-                $stmt = $pdo->prepare("
-                    INSERT INTO notifications (member_id, transaction_id, message, type, is_sent)
-                    VALUES (:member_id, :transaction_id, :message, :type, :is_sent)
-                ");
-                $stmt->bindParam(':member_id', $memberInfo['id']);
-                $stmt->bindParam(':transaction_id', $transactionData['id']);
-                $stmt->bindParam(':message', $notificationMessage);
-                $stmt->bindParam(':type', $notificationType);
-                
                 // Send email directly using our specialized function
                 try {
                     file_put_contents($borrowLogFile, date('Y-m-d H:i:s') . " - Attempting to send email to: " . $memberInfo['email'] . " using direct method\n", FILE_APPEND);
@@ -530,10 +513,6 @@ This receipt was generated on " . date('Y-m-d H:i:s');
                     file_put_contents($borrowLogFile, date('Y-m-d H:i:s') . " - Exception in email sending: " . $e->getMessage() . "\n", FILE_APPEND);
                     $isSent = false;
                 }
-                
-                // Record notification status
-                $stmt->bindParam(':is_sent', $isSent);
-                $stmt->execute();
                 
                 // Log the email completion status
                 $logMessage = date('Y-m-d H:i:s') . " - Borrowing receipt email process complete for transaction ID: " . $transactionData['id'] . " - Status: " . ($isSent ? "SUCCESS" : "FAILED") . "\n";

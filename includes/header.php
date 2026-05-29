@@ -19,16 +19,17 @@ $navIsAdmin = function_exists('isAdmin') && isAdmin();
 $navIsStaff = function_exists('isStaff') && isStaff();
 $navRoleLabel = $navIsStaff ? 'Staff' : 'Admin';
 
-// Count unread notifications (emails sent today)
+// Staff activity notifications (unread count)
 $notificationCount = 0;
-if (file_exists('logs/email_log.txt')) {
-    $today = date('Y-m-d');
-    $logContents = file_get_contents('logs/email_log.txt');
-    $lines = explode("\n", $logContents);
-    foreach ($lines as $line) {
-        if (strpos($line, $today) !== false && strpos($line, 'SUCCESS') !== false) {
-            $notificationCount++;
-        }
+$recentNotifications = [];
+if (function_exists('isLoggedIn') && isLoggedIn()
+    && ($navIsAdmin || (function_exists('staffHasPermission') && staffHasPermission('notifications.view')))) {
+    if (!isset($pdo)) {
+        require_once dirname(__DIR__) . '/config/db_connect.php';
+    }
+    if (function_exists('getUnreadNotificationCount')) {
+        $notificationCount = getUnreadNotificationCount();
+        $recentNotifications = getRecentStaffNotifications(8);
     }
 }
 
@@ -232,76 +233,39 @@ if (isset($_SESSION['admin_id'])) {
                     <div class="relative">
                         <button id="notification-menu-button" class="p-2 rounded-full text-white hover:bg-[#8f1212] relative">
                         <i class="fas fa-bell"></i>
-                        <?php if ($notificationCount > 0): ?>
-                            <!-- Notification counter -->
-                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center"><?php echo $notificationCount > 9 ? '9+' : $notificationCount; ?></span>
-                        <?php else: ?>
-                            <!-- Empty notification indicator dot -->
-                            <span class="absolute top-1 right-1 w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full"></span>
-                        <?php endif; ?>
+                            <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center <?php echo $notificationCount > 0 ? '' : 'hidden'; ?>"><?php echo $notificationCount > 9 ? '9+' : $notificationCount; ?></span>
                         </button>
                         <!-- Notification Dropdown Menu (hidden by default) -->
                         <div id="notification-dropdown" class="hidden absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
                             <div class="py-1">
                                 <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                                     <div class="flex justify-between items-center">
-                                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Notifications</h3>
+                                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Activity</h3>
                                         <a href="notifications.php" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">View all</a>
                                     </div>
                                 </div>
                                 
-                                <?php
-                                // Get recent notifications
-                                try {
-                                    $stmt = $pdo->query("
-                                        SELECT n.id, n.message, n.created_at, n.type, n.is_read
-                                        FROM notifications n
-                                        ORDER BY n.created_at DESC
-                                        LIMIT 5
-                                    ");
-                                    $recentNotifications = $stmt->fetchAll();
-                                } catch (PDOException $e) {
-                                    $recentNotifications = [];
-                                }
-                                
-                                if (!empty($recentNotifications)): 
-                                ?>
-                                    <div class="max-h-56 overflow-y-auto">
-                                        <?php foreach($recentNotifications as $notification): 
-                                            // Determine icon based on type
-                                            $typeIcon = 'info-circle';
-                                            $typeClass = 'text-blue-500';
-                                            
-                                            if (strpos($notification['type'], 'Borrow') !== false) {
-                                                $typeIcon = 'book';
-                                                $typeClass = 'text-green-500';
-                                            } elseif (strpos($notification['type'], 'Return') !== false) {
-                                                $typeIcon = 'undo';
-                                                $typeClass = 'text-purple-500';
-                                            } elseif (strpos($notification['type'], 'Due') !== false) {
-                                                $typeIcon = 'clock';
-                                                $typeClass = 'text-yellow-500';
-                                            } elseif (strpos($notification['type'], 'Overdue') !== false) {
-                                                $typeIcon = 'exclamation-triangle';
-                                                $typeClass = 'text-red-500';
-                                            }
+                                <div id="notification-list" class="max-h-56 overflow-y-auto" data-last-id="<?php echo !empty($recentNotifications) ? (int) $recentNotifications[0]['id'] : 0; ?>">
+                                <?php if (!empty($recentNotifications)): ?>
+                                        <?php foreach ($recentNotifications as $notification):
+                                            $meta = getNotificationTypeMeta($notification['type'] ?? 'System');
                                         ?>
-                                            <a href="notifications.php?action=mark_read&id=<?php echo $notification['id']; ?>" 
-                                               class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 <?php echo !$notification['is_read'] ? 'bg-blue-50 dark:bg-blue-900/30' : ''; ?>">
+                                            <a href="notifications.php?action=mark_read&id=<?php echo (int) $notification['id']; ?>" 
+                                               class="notification-item block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 <?php echo empty($notification['is_read']) ? 'bg-blue-50 dark:bg-blue-900/30' : ''; ?>"
+                                               data-id="<?php echo (int) $notification['id']; ?>">
                                                 <div class="flex items-start">
                                                     <div class="mr-2 mt-0.5">
-                                                        <i class="fas fa-<?php echo $typeIcon; ?> <?php echo $typeClass; ?>"></i>
+                                                        <i class="fas fa-<?php echo htmlspecialchars($meta['icon']); ?> <?php echo htmlspecialchars($meta['class']); ?>"></i>
                                                     </div>
                                                     <div class="flex-1">
-                                                        <p class="text-xs font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($notification['type']); ?></p>
-                                                        <p class="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">
-                                                            <?php echo htmlspecialchars(substr($notification['message'], 0, 100)) . (strlen($notification['message']) > 100 ? '...' : ''); ?>
+                                                        <p class="text-xs text-gray-900 dark:text-white line-clamp-2">
+                                                            <?php echo htmlspecialchars($notification['message']); ?>
                                                         </p>
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                            <?php echo date('M j, g:i a', strtotime($notification['created_at'])); ?>
+                                                            <?php echo date('M j, g:i A', strtotime($notification['created_at'])); ?>
                                                         </p>
                                                     </div>
-                                                    <?php if (!$notification['is_read']): ?>
+                                                    <?php if (empty($notification['is_read'])): ?>
                                                         <div class="ml-2">
                                                             <div class="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                                                         </div>
@@ -309,12 +273,12 @@ if (isset($_SESSION['admin_id'])) {
                                                 </div>
                                             </a>
                                         <?php endforeach; ?>
-                                    </div>
                                 <?php else: ?>
-                                    <div class="p-4 text-center">
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">No notifications yet</p>
+                                    <div id="notification-empty" class="p-4 text-center">
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">No activity yet</p>
                                     </div>
                                 <?php endif; ?>
+                                </div>
                                 
                                 <div class="border-t border-gray-200 dark:border-gray-700 mt-1">
                                     <a href="notifications.php" class="block w-full px-4 py-2 text-sm text-center text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -525,13 +489,87 @@ if (isset($_SESSION['admin_id'])) {
                         userDropdown.classList.add('hidden');
                     }
                 });
-                
+
                 // Close the dropdown when clicking outside
                 document.addEventListener('click', function(event) {
                     if (!notificationMenuButton.contains(event.target) && !notificationDropdown.contains(event.target)) {
                         notificationDropdown.classList.add('hidden');
                     }
                 });
+
+                // Real-time staff activity notifications (poll every 15s)
+                const notificationList = document.getElementById('notification-list');
+                const notificationBadge = document.getElementById('notification-badge');
+                let lastNotificationId = notificationList ? parseInt(notificationList.dataset.lastId || '0', 10) : 0;
+
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text == null ? '' : String(text);
+                    return div.innerHTML;
+                }
+
+                function renderNotificationItem(item) {
+                    const unreadClass = !item.is_read ? 'bg-blue-50 dark:bg-blue-900/30' : '';
+                    const dot = !item.is_read ? '<div class="ml-2"><div class="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full"></div></div>' : '';
+                    return `
+                        <a href="${escapeHtml(item.mark_read_url)}"
+                           class="notification-item block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${unreadClass}"
+                           data-id="${item.id}">
+                            <div class="flex items-start">
+                                <div class="mr-2 mt-0.5">
+                                    <i class="fas fa-${escapeHtml(item.icon)} ${escapeHtml(item.icon_class)}"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-xs text-gray-900 dark:text-white line-clamp-2">${escapeHtml(item.message)}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${escapeHtml(item.created_at_label)}</p>
+                                </div>
+                                ${dot}
+                            </div>
+                        </a>`;
+                }
+
+                function updateNotificationBadge(count) {
+                    if (!notificationBadge) return;
+                    if (count > 0) {
+                        notificationBadge.textContent = count > 9 ? '9+' : String(count);
+                        notificationBadge.classList.remove('hidden');
+                    } else {
+                        notificationBadge.classList.add('hidden');
+                    }
+                }
+
+                async function pollNotifications() {
+                    try {
+                        const url = 'notifications_feed.php?since_id=' + encodeURIComponent(lastNotificationId) + '&limit=10';
+                        const res = await fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
+                        if (!res.ok) return;
+                        const data = await res.json();
+                        updateNotificationBadge(data.unread_count || 0);
+
+                        if (!notificationList || !data.items || !data.items.length) return;
+
+                        const emptyEl = document.getElementById('notification-empty');
+                        if (emptyEl) emptyEl.remove();
+
+                        data.items.forEach(function(item) {
+                            if (notificationList.querySelector('[data-id="' + item.id + '"]')) return;
+                            notificationList.insertAdjacentHTML('afterbegin', renderNotificationItem(item));
+                            if (item.id > lastNotificationId) lastNotificationId = item.id;
+                        });
+
+                        notificationList.dataset.lastId = String(lastNotificationId);
+
+                        const items = notificationList.querySelectorAll('.notification-item');
+                        while (items.length > 12) {
+                            items[items.length - 1].remove();
+                        }
+                    } catch (e) {
+                        // silent fail for polling
+                    }
+                }
+
+                pollNotifications();
+                setInterval(pollNotifications, 15000);
             }
         });
     </script>

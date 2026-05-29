@@ -185,15 +185,17 @@ function processBookPenalty($bookBarcode, $penaltyType) {
             $penaltySettings['lost_book_fee'];
         
         // Update transaction with penalty
+        $returnDate = appNowString();
         $stmt = $pdo->prepare("
             UPDATE transactions 
             SET status = 'Returned', 
-                return_date = NOW(),
+                return_date = :return_date,
                 penalty_amount = :penalty_amount,
                 penalty_type = :penalty_type,
                 payment_status = 'Penalty Fee Pending'
             WHERE id = :id
         ");
+        $stmt->bindParam(':return_date', $returnDate);
         $stmt->bindParam(':penalty_amount', $penaltyAmount);
         $stmt->bindParam(':penalty_type', $penaltyType);
         $stmt->bindParam(':id', $transaction['id'], PDO::PARAM_INT);
@@ -215,9 +217,16 @@ function processBookPenalty($bookBarcode, $penaltyType) {
         $stmt->bindParam(':id', $book['id'], PDO::PARAM_INT);
         $stmt->execute();
         
+        $penaltyLabel = ($penaltyType === 'damaged') ? 'damaged' : 'lost';
+        logStaffActivityNotification(
+            $transaction['fullname'] . ' — "' . $book['title'] . '" marked as ' . $penaltyLabel . ' (₱' . number_format($penaltyAmount, 2) . ' penalty).',
+            'Penalty',
+            (int) $transaction['member_id'],
+            (int) $transaction['id']
+        );
+
         // Send email notification if enabled
         if ($transaction['notifications_enabled'] && !empty($transaction['email'])) {
-            // Create notification message
             $notificationType = ($penaltyType === 'damaged') ? 'Book Damaged Penalty' : 'Book Lost Penalty';
             $notificationMessage = "Dear " . htmlspecialchars($transaction['fullname']) . ",\n\n";
             $notificationMessage .= "We regret to inform you that a penalty has been applied for the book '" . htmlspecialchars($book['title']) . "'.\n\n";
@@ -233,17 +242,6 @@ function processBookPenalty($bookBarcode, $penaltyType) {
             $notificationMessage .= "Please pay this amount to the librarian at your earliest convenience.\n\n";
             $notificationMessage .= "Thank you for your understanding.\n";
             $notificationMessage .= "EVSU Book Borrowing System";
-            
-            // Record notification in database
-            $stmt = $pdo->prepare("
-                INSERT INTO notifications (member_id, transaction_id, message, type, is_sent)
-                VALUES (:member_id, :transaction_id, :message, :type, 1)
-            ");
-            $stmt->bindParam(':member_id', $transaction['member_id']);
-            $stmt->bindParam(':transaction_id', $transaction['id']);
-            $stmt->bindParam(':message', $notificationMessage);
-            $stmt->bindParam(':type', $notificationType);
-            $stmt->execute();
             
             // Send email
             $emailSubject = "EVSU Book Borrowing System - " . $notificationType;

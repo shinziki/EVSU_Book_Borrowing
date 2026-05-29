@@ -19,11 +19,10 @@ if (isset($_GET['action'])) {
     header('Location: notifications.php');
     exit;
     } elseif ($action === 'delete_all') {
-        $memberId = $_SESSION['admin_id']; // Current admin/staff member
-        if (deleteAllMemberNotifications($memberId)) {
-            setFlashMessage('All notifications deleted successfully', 'success');
+        if (deleteAllStaffNotifications()) {
+            setFlashMessage('Activity log cleared successfully', 'success');
         } else {
-            setFlashMessage('Failed to delete notifications', 'error');
+            setFlashMessage('Failed to clear activity log', 'error');
         }
     header('Location: notifications.php');
     exit;
@@ -102,8 +101,8 @@ include 'includes/header.php';
 
 <div class="mb-6 flex justify-between items-center">
     <div>
-        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Notifications</h2>
-        <p class="text-gray-600 dark:text-gray-400">Manage system notifications and member communication</p>
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Activity Log</h2>
+        <p class="text-gray-600 dark:text-gray-400">Staff alerts for borrows, returns, penalties, and due dates (updates in real time)</p>
     </div>
     <div class="flex space-x-3">
         <button type="button" onclick="showTestEmailModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
@@ -117,69 +116,38 @@ include 'includes/header.php';
 
 <div class="grid grid-cols-1 gap-6">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Notification Log</h3>
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Recent Activity</h3>
         
         <?php if (count($notifications) > 0): ?>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-700 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
-                            <th class="px-4 py-3 rounded-tl-lg">Type</th>
-                            <th class="px-4 py-3">Member</th>
-                            <th class="px-4 py-3">Book</th>
+                            <th class="px-4 py-3 rounded-tl-lg w-12"></th>
+                            <th class="px-4 py-3">Activity</th>
                             <th class="px-4 py-3">Date</th>
-                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3">Read</th>
                             <th class="px-4 py-3 rounded-tr-lg">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($notifications as $notification): ?>
+                            <?php $meta = getNotificationTypeMeta($notification['type'] ?? 'System'); ?>
                             <tr class="border-b dark:border-gray-700 <?php echo $notification['is_read'] ? 'bg-gray-50 dark:bg-gray-800' : 'bg-white dark:bg-gray-900'; ?>">
-                                <td class="px-4 py-3">
-                                    <?php
-                                        $typeIcon = 'info-circle';
-                                        $typeClass = 'text-blue-500';
-                                        
-                                        if ($notification['type'] === 'Borrow Confirmation') {
-                                            $typeIcon = 'book';
-                                            $typeClass = 'text-green-500';
-                                        } elseif ($notification['type'] === 'Return Confirmation') {
-                                            $typeIcon = 'undo';
-                                            $typeClass = 'text-purple-500';
-                                        } elseif ($notification['type'] === 'Due Soon') {
-                                            $typeIcon = 'clock';
-                                            $typeClass = 'text-yellow-500';
-                                        } elseif ($notification['type'] === 'Overdue') {
-                                            $typeIcon = 'exclamation-triangle';
-                                            $typeClass = 'text-red-500';
-                                        }
-                                    ?>
-                                    <span class="flex items-center">
-                                        <i class="fas fa-<?php echo $typeIcon; ?> <?php echo $typeClass; ?> mr-2"></i>
-                                        <?php echo htmlspecialchars($notification['type']); ?>
-                                    </span>
+                                <td class="px-4 py-3 text-center" title="<?php echo htmlspecialchars($notification['type']); ?>">
+                                    <i class="fas fa-<?php echo htmlspecialchars($meta['icon']); ?> <?php echo htmlspecialchars($meta['class']); ?>"></i>
                                 </td>
-                                <td class="px-4 py-3">
-                                    <?php echo htmlspecialchars($notification['member_name']); ?>
-                                    <?php if (!empty($notification['member_barcode'])): ?>
-                                        <div class="text-xs text-gray-500"><?php echo htmlspecialchars($notification['member_barcode']); ?></div>
-                                    <?php endif; ?>
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                                    <?php echo htmlspecialchars($notification['message']); ?>
                                 </td>
-                                <td class="px-4 py-3">
-                                    <?php echo !empty($notification['book_title']) ? htmlspecialchars($notification['book_title']) : 'N/A'; ?>
-                                </td>
-                                <td class="px-4 py-3">
+                                <td class="px-4 py-3 whitespace-nowrap">
                                     <?php echo date('M j, Y g:i A', strtotime($notification['created_at'])); ?>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <?php if ($notification['is_sent']): ?>
-                                        <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                            <i class="fas fa-check mr-1"></i> Sent
-                                        </span>
+                                    <?php if ($notification['is_read']): ?>
+                                        <span class="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">Read</span>
                                     <?php else: ?>
-                                        <span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                            <i class="fas fa-times mr-1"></i> Failed
-                                        </span>
+                                        <span class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">New</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-4 py-3">
@@ -218,7 +186,7 @@ include 'includes/header.php';
         <?php else: ?>
             <div class="text-center py-8">
                 <i class="fas fa-bell text-gray-400 text-5xl mb-4"></i>
-                <p class="text-gray-500 dark:text-gray-400">No notifications found</p>
+                <p class="text-gray-500 dark:text-gray-400">No activity recorded yet</p>
             </div>
         <?php endif; ?>
     </div>

@@ -4,6 +4,36 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+/** Application timezone (Philippines) */
+define('APP_TIMEZONE', 'Asia/Manila');
+date_default_timezone_set(APP_TIMEZONE);
+
+/**
+ * Philippine timezone for DateTime operations.
+ */
+function appDateTimeZone(): DateTimeZone {
+    static $tz = null;
+    if ($tz === null) {
+        $tz = new DateTimeZone(APP_TIMEZONE);
+    }
+    return $tz;
+}
+
+/**
+ * Current date/time in Philippine timezone.
+ */
+function appNow(?string $modify = null): DateTimeImmutable {
+    $dt = new DateTimeImmutable('now', appDateTimeZone());
+    return $modify ? $dt->modify($modify) : $dt;
+}
+
+/**
+ * Current date/time string for database storage (Y-m-d H:i:s).
+ */
+function appNowString(string $format = 'Y-m-d H:i:s'): string {
+    return appNow()->format($format);
+}
+
 /**
  * Ensure admins.role column exists (admin | staff)
  */
@@ -385,6 +415,9 @@ function getStaffPermissionDefinitions() {
                 ['key' => 'borrow.process', 'label' => 'Process book borrowing', 'default' => true],
                 ['key' => 'return.process', 'label' => 'Process book returns', 'default' => true],
                 ['key' => 'transactions.view', 'label' => 'View borrow & return history', 'default' => true],
+                ['key' => 'transactions.view_details', 'label' => 'View transaction details', 'default' => false],
+                ['key' => 'transactions.delete', 'label' => 'Delete individual transactions', 'default' => false],
+                ['key' => 'transactions.delete_all', 'label' => 'Delete all transactions', 'default' => false],
             ],
         ],
         [
@@ -1025,16 +1058,18 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 1, $paymentAmount = 0.
         // Ensure due_date supports time component (DATETIME)
         ensureTransactionsDueDateDateTime();
 
-        // Calculate due date (exactly +N days from now, keeping time)
-        $dueDate = (new DateTimeImmutable('now'))->modify('+' . (int) $days . ' day')->format('Y-m-d H:i:s');
+        // Borrow/due dates in Philippine time (do not rely on host MySQL timezone)
+        $borrowDate = appNowString();
+        $dueDate = appNow('+' . (int) $days . ' day')->format('Y-m-d H:i:s');
         
         // Insert transaction record
         $stmt = $pdo->prepare("
             INSERT INTO transactions (book_id, member_id, borrow_date, due_date, status, payment_amount, payment_status)
-            VALUES (:book_id, :member_id, NOW(), :due_date, 'Borrowed', :payment_amount, 'Paid')
+            VALUES (:book_id, :member_id, :borrow_date, :due_date, 'Borrowed', :payment_amount, 'Paid')
         ");
         $stmt->bindParam(':book_id', $book['id'], PDO::PARAM_INT);
         $stmt->bindParam(':member_id', $member['id'], PDO::PARAM_INT);
+        $stmt->bindParam(':borrow_date', $borrowDate);
         $stmt->bindParam(':due_date', $dueDate);
         $stmt->bindParam(':payment_amount', $paymentAmount);
         
@@ -1117,6 +1152,13 @@ function borrowBook($bookBarcode, $memberBarcode, $days = 1, $paymentAmount = 0.
         // Commit transaction
         $pdo->commit();
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transaction committed successfully\n", FILE_APPEND);
+
+        logStaffActivityNotification(
+            $member['fullname'] . ' borrowed "' . $book['title'] . '".',
+            'Borrowed',
+            (int) $member['id'],
+            (int) $transactionId
+        );
 
         // Send email notification to member
         if (!empty($member['email'])) {
@@ -1250,6 +1292,7 @@ function returnBook($bookBarcode) {
         $today = strtotime('today');
         $hasPenalty = ($today > $dueDate);
         $penaltyAmount = $hasPenalty ? calculateLateReturnPenalty($transaction) : 0;
+        $returnDate = appNowString();
         
         // Get column names from transactions table to ensure we're using the right field name
         $stmt = $pdo->query("DESCRIBE transactions");
@@ -1266,7 +1309,7 @@ function returnBook($bookBarcode) {
             $stmt = $pdo->prepare("
                 UPDATE transactions 
                 SET status = 'Returned', 
-                    return_date = NOW(),
+                    return_date = :return_date,
                     late_fee = :penalty_amount
                 WHERE id = :id
             ");
@@ -1274,7 +1317,7 @@ function returnBook($bookBarcode) {
             $stmt = $pdo->prepare("
                 UPDATE transactions 
                 SET status = 'Returned', 
-                    return_date = NOW(),
+                    return_date = :return_date,
                     penalty_amount = :penalty_amount
                 WHERE id = :id
             ");
@@ -1283,11 +1326,12 @@ function returnBook($bookBarcode) {
             $stmt = $pdo->prepare("
                 UPDATE transactions 
                 SET status = 'Returned', 
-                    return_date = NOW()
+                    return_date = :return_date
                 WHERE id = :id
             ");
         }
         
+        $stmt->bindParam(':return_date', $returnDate);
         // Only bind penalty amount if we're using that field
         if ($hasLateFeeField || $hasPenaltyField) {
             $stmt->bindParam(':penalty_amount', $penaltyAmount);
@@ -1347,11 +1391,20 @@ function returnBook($bookBarcode) {
         $stmt->bindParam(':payment_status', $paymentStatus);
         $stmt->bindParam(':id', $transaction['id'], PDO::PARAM_INT);
         $stmt->execute();
+
+        $staffReturnMessage = $transaction['fullname'] . ' returned "' . $book['title'] . '".';
+        if ($hasPenalty) {
+            $staffReturnMessage = $transaction['fullname'] . ' returned "' . $book['title'] . '" (overdue — ₱' . number_format($penaltyAmount, 2) . ' penalty).';
+        }
+        logStaffActivityNotification(
+            $staffReturnMessage,
+            'Returned',
+            (int) $transaction['member_id'],
+            (int) $transaction['id']
+        );
         
         // Send email notification if enabled
         if ($transaction['notifications_enabled'] && !empty($transaction['email'])) {
-            // Create notification for return
-            $notificationType = $hasPenalty ? 'Returned Late' : 'Returned';
             $notificationMessage = "Dear " . htmlspecialchars($transaction['fullname']) . ",\n\n";
             $notificationMessage .= "You have returned the book '" . htmlspecialchars($book['title']) . "'.\n";
             
@@ -1362,16 +1415,6 @@ function returnBook($bookBarcode) {
             }
             
             $notificationMessage .= "Thank you for using EVSU Book Borrowing System!\n";
-            
-            // Record notification in database
-            $stmt = $pdo->prepare("
-                INSERT INTO notifications (member_id, transaction_id, message, type, is_sent)
-                VALUES (:member_id, :transaction_id, :message, :type, :is_sent)
-            ");
-            $stmt->bindParam(':member_id', $transaction['member_id']);
-            $stmt->bindParam(':transaction_id', $transaction['id']);
-            $stmt->bindParam(':message', $notificationMessage);
-            $stmt->bindParam(':type', $notificationType);
             
             try {
                 // Create dedicated log file for this return
@@ -1470,14 +1513,7 @@ Thank you for using EVSU Book Borrowing System!";
                 $logMessage = date('Y-m-d H:i:s') . " - Return email to " . $transaction['email'] . " status: " . ($isSent ? "SENT" : "FAILED") . "\n";
                 file_put_contents($returnLogFile, $logMessage, FILE_APPEND);
                 
-                // Record notification status
-                $stmt->bindValue(':is_sent', $isSent, PDO::PARAM_BOOL);
-                $stmt->execute();
-                
             } catch (Exception $e) {
-                // If email fails, still record the notification but mark as not sent
-                $stmt->bindValue(':is_sent', false, PDO::PARAM_BOOL);
-                $stmt->execute();
                 error_log("Return notification email error: " . $e->getMessage());
             }
         }
@@ -1493,7 +1529,7 @@ Thank you for using EVSU Book Borrowing System!";
             'transaction_id' => $transaction['id'],
             'borrow_date' => $transaction['borrow_date'],
             'due_date' => $transaction['due_date'],
-            'return_date' => date('Y-m-d H:i:s'),
+            'return_date' => $returnDate,
             'has_penalty' => $hasPenalty,
             'penalty_amount' => $penaltyAmount,
             'payment_status' => $paymentStatus
@@ -1556,6 +1592,7 @@ function returnBookByTransactionId($transactionId) {
         $today = strtotime('today');
         $hasPenalty = ($today > $dueDate);
         $penaltyAmount = $hasPenalty ? calculateLateReturnPenalty($transaction) : 0;
+        $returnDate = appNowString();
 
         // Get column names from transactions table to ensure we're using the right field name
         $stmt = $pdo->query("DESCRIBE transactions");
@@ -1572,7 +1609,7 @@ function returnBookByTransactionId($transactionId) {
             $stmt = $pdo->prepare("
                 UPDATE transactions 
                 SET status = 'Returned', 
-                    return_date = NOW(),
+                    return_date = :return_date,
                     late_fee = :penalty_amount
                 WHERE id = :id
             ");
@@ -1580,7 +1617,7 @@ function returnBookByTransactionId($transactionId) {
             $stmt = $pdo->prepare("
                 UPDATE transactions 
                 SET status = 'Returned', 
-                    return_date = NOW(),
+                    return_date = :return_date,
                     penalty_amount = :penalty_amount
                 WHERE id = :id
             ");
@@ -1589,16 +1626,28 @@ function returnBookByTransactionId($transactionId) {
             $stmt = $pdo->prepare("
                 UPDATE transactions 
                 SET status = 'Returned', 
-                    return_date = NOW()
+                    return_date = :return_date
                 WHERE id = :id
             ");
         }
 
+        $stmt->bindParam(':return_date', $returnDate);
         if ($hasLateFeeField || $hasPenaltyField) {
             $stmt->bindParam(':penalty_amount', $penaltyAmount);
         }
         $stmt->bindParam(':id', $transactionId, PDO::PARAM_INT);
         $stmt->execute();
+
+        $staffReturnMessage = $transaction['fullname'] . ' returned "' . $book['title'] . '".';
+        if ($hasPenalty) {
+            $staffReturnMessage = $transaction['fullname'] . ' returned "' . $book['title'] . '" (overdue — ₱' . number_format($penaltyAmount, 2) . ' penalty).';
+        }
+        logStaffActivityNotification(
+            $staffReturnMessage,
+            'Returned',
+            (int) $transaction['member_id'],
+            $transactionId
+        );
 
         // Update book status and quantity/stock
         $stmt = $pdo->query("DESCRIBE books");
@@ -1664,7 +1713,7 @@ function returnBookByTransactionId($transactionId) {
             'transaction_id' => $transactionId,
             'borrow_date' => $transaction['borrow_date'],
             'due_date' => $transaction['due_date'],
-            'return_date' => date('Y-m-d H:i:s'),
+            'return_date' => $returnDate,
             'has_penalty' => $hasPenalty,
             'penalty_amount' => $penaltyAmount,
             'payment_status' => $paymentStatus
@@ -1776,33 +1825,26 @@ function sendDueDateReminders($daysBeforeDue = 2) {
         $notificationsSent = 0;
         
         foreach ($dueSoonTransactions as $transaction) {
-            $notificationType = 'Due Soon';
-            $notificationMessage = "Dear " . htmlspecialchars($transaction['member_name']) . ",\n\n";
-            $notificationMessage .= "This is a friendly reminder that the book '" . htmlspecialchars($transaction['book_title']) . "' is due soon.\n";
-            $notificationMessage .= "Due date: " . date('F j, Y, g:i A', strtotime($transaction['due_date'])) . "\n\n";
-            $notificationMessage .= "Please return the book on time to avoid penalty charges.\n";
-            $notificationMessage .= "Late returns may incur a penalty fee.\n\n";
-            $notificationMessage .= "Thank you for using EVSU Book Borrowing System!\n";
+            $staffMessage = '"' . $transaction['book_title'] . '" borrowed by ' . $transaction['member_name']
+                . ' is due on ' . date('M j, Y, g:i A', strtotime($transaction['due_date'])) . '.';
+            logStaffActivityNotification(
+                $staffMessage,
+                'Due Soon',
+                (int) $transaction['member_id'],
+                (int) $transaction['id']
+            );
+
+            $emailMessage = "Dear " . htmlspecialchars($transaction['member_name']) . ",\n\n";
+            $emailMessage .= "This is a friendly reminder that the book '" . htmlspecialchars($transaction['book_title']) . "' is due soon.\n";
+            $emailMessage .= "Due date: " . date('F j, Y, g:i A', strtotime($transaction['due_date'])) . "\n\n";
+            $emailMessage .= "Please return the book on time to avoid penalty charges.\n\n";
+            $emailMessage .= "Thank you for using EVSU Book Borrowing System!\n";
             
-            // Prepare email headers
             $emailSubject = "Book Due Soon Reminder - EVSU Book Borrowing System";
             $emailHeaders = "From: EVSU Book Borrowing System <noreply@coffeeprincelibrary.com>\r\n";
             $emailHeaders .= "Content-Type: text/plain; charset=UTF-8\r\n";
             
-            // Send email
-            $emailSent = sendEmailWithLogging($transaction['email'], $emailSubject, $notificationMessage, $emailHeaders);
-            
-            // Record notification in database
-            $stmt = $pdo->prepare("
-                INSERT INTO notifications (member_id, transaction_id, message, type, is_sent)
-                VALUES (:member_id, :transaction_id, :message, :type, :is_sent)
-            ");
-            $stmt->bindParam(':member_id', $transaction['member_id']);
-            $stmt->bindParam(':transaction_id', $transaction['id']);
-            $stmt->bindParam(':message', $notificationMessage);
-            $stmt->bindParam(':type', $notificationType);
-            $stmt->bindParam(':is_sent', $emailSent, PDO::PARAM_BOOL);
-            $stmt->execute();
+            $emailSent = sendEmailWithLogging($transaction['email'], $emailSubject, $emailMessage, $emailHeaders);
             
             if ($emailSent) {
                 $notificationsSent++;
@@ -1843,33 +1885,25 @@ function sendOverdueNotifications() {
         foreach ($overdueTransactions as $transaction) {
             $penaltyAmount = calculateLateReturnPenalty($transaction);
             
-            $notificationType = 'Overdue';
-            $notificationMessage = "Dear " . htmlspecialchars($transaction['member_name']) . ",\n\n";
-            $notificationMessage .= "The book '" . htmlspecialchars($transaction['book_title']) . "' is OVERDUE.\n";
-            $notificationMessage .= "Due date was: " . date('F j, Y, g:i A', strtotime($transaction['due_date'])) . "\n";
-            $notificationMessage .= "Penalty amount: " . number_format($penaltyAmount, 2) . " pesos\n\n";
-            $notificationMessage .= "Please return the book as soon as possible and settle the penalty.\n\n";
-            $notificationMessage .= "Thank you for your cooperation.\n";
+            logStaffActivityNotification(
+                '"' . $transaction['book_title'] . '" borrowed by ' . $transaction['member_name'] . ' is overdue.',
+                'Overdue',
+                (int) $transaction['member_id'],
+                (int) $transaction['id']
+            );
+
+            $emailMessage = "Dear " . htmlspecialchars($transaction['member_name']) . ",\n\n";
+            $emailMessage .= "The book '" . htmlspecialchars($transaction['book_title']) . "' is OVERDUE.\n";
+            $emailMessage .= "Due date was: " . date('F j, Y, g:i A', strtotime($transaction['due_date'])) . "\n";
+            $emailMessage .= "Penalty amount: " . number_format($penaltyAmount, 2) . " pesos\n\n";
+            $emailMessage .= "Please return the book as soon as possible and settle the penalty.\n\n";
+            $emailMessage .= "Thank you for using EVSU Book Borrowing System!\n";
             
-            // Prepare email headers
             $emailSubject = "OVERDUE BOOK NOTICE - EVSU Book Borrowing System";
             $emailHeaders = "From: EVSU Book Borrowing System <noreply@coffeeprincelibrary.com>\r\n";
             $emailHeaders .= "Content-Type: text/plain; charset=UTF-8\r\n";
             
-            // Send email
-            $emailSent = sendEmailWithLogging($transaction['email'], $emailSubject, $notificationMessage, $emailHeaders);
-            
-            // Record notification in database
-            $stmt = $pdo->prepare("
-                INSERT INTO notifications (member_id, transaction_id, message, type, is_sent)
-                VALUES (:member_id, :transaction_id, :message, :type, :is_sent)
-            ");
-            $stmt->bindParam(':member_id', $transaction['member_id']);
-            $stmt->bindParam(':transaction_id', $transaction['id']);
-            $stmt->bindParam(':message', $notificationMessage);
-            $stmt->bindParam(':type', $notificationType);
-            $stmt->bindParam(':is_sent', $emailSent, PDO::PARAM_BOOL);
-            $stmt->execute();
+            $emailSent = sendEmailWithLogging($transaction['email'], $emailSubject, $emailMessage, $emailHeaders);
             
             if ($emailSent) {
                 $notificationsSent++;
@@ -1880,6 +1914,137 @@ function sendOverdueNotifications() {
     } catch (PDOException $e) {
         return 0;
     }
+}
+
+/**
+ * Allow flexible notification types for staff activity log.
+ */
+function ensureNotificationTypeFlexible() {
+    global $pdo;
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+    try {
+        $stmt = $pdo->query("SHOW COLUMNS FROM notifications LIKE 'type'");
+        $col = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($col && isset($col['Type']) && stripos((string) $col['Type'], 'enum') !== false) {
+            $pdo->exec("ALTER TABLE notifications MODIFY COLUMN type VARCHAR(64) NOT NULL DEFAULT 'System'");
+        }
+    } catch (PDOException $e) {
+        error_log('ensureNotificationTypeFlexible: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Log a staff-facing activity notification (not a personalized member message).
+ */
+function logStaffActivityNotification(
+    string $message,
+    string $type = 'System',
+    ?int $memberId = null,
+    ?int $transactionId = null
+): bool {
+    global $pdo;
+
+    try {
+        ensureNotificationTypeFlexible();
+
+        $stmt = $pdo->prepare("
+            INSERT INTO notifications (member_id, transaction_id, message, type, is_sent, is_read, created_at)
+            VALUES (:member_id, :transaction_id, :message, :type, 1, 0, :created_at)
+        ");
+        $createdAt = appNowString();
+        $stmt->bindValue(':member_id', $memberId, $memberId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $stmt->bindValue(':transaction_id', $transactionId, $transactionId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $stmt->bindParam(':message', $message);
+        $stmt->bindParam(':type', $type);
+        $stmt->bindParam(':created_at', $createdAt);
+        $stmt->execute();
+
+        return true;
+    } catch (PDOException $e) {
+        error_log('logStaffActivityNotification: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Unread staff notification count.
+ */
+function getUnreadNotificationCount(): int {
+    global $pdo;
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) FROM notifications WHERE IFNULL(is_read, 0) = 0");
+        return (int) $stmt->fetchColumn();
+    } catch (PDOException $e) {
+        return 0;
+    }
+}
+
+/**
+ * Recent notifications for bell dropdown / live feed.
+ */
+function getRecentStaffNotifications(int $limit = 10, int $sinceId = 0): array {
+    global $pdo;
+    $limit = max(1, min(50, $limit));
+    $sinceId = max(0, $sinceId);
+
+    try {
+        if ($sinceId > 0) {
+            $stmt = $pdo->prepare("
+                SELECT n.id, n.message, n.type, n.is_read, n.created_at
+                FROM notifications n
+                WHERE n.id > :since_id
+                ORDER BY n.id DESC
+                LIMIT :limit
+            ");
+            $stmt->bindParam(':since_id', $sinceId, PDO::PARAM_INT);
+        } else {
+            $stmt = $pdo->prepare("
+                SELECT n.id, n.message, n.type, n.is_read, n.created_at
+                FROM notifications n
+                ORDER BY n.created_at DESC
+                LIMIT :limit
+            ");
+        }
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+/**
+ * Icon metadata for notification types (UI).
+ */
+function getNotificationTypeMeta(string $type): array {
+    $map = [
+        'Borrowed' => ['icon' => 'book', 'class' => 'text-green-500'],
+        'Returned' => ['icon' => 'undo', 'class' => 'text-purple-500'],
+        'Penalty' => ['icon' => 'exclamation-circle', 'class' => 'text-orange-500'],
+        'Book Damaged Penalty' => ['icon' => 'exclamation-circle', 'class' => 'text-orange-500'],
+        'Book Lost Penalty' => ['icon' => 'exclamation-circle', 'class' => 'text-orange-500'],
+        'Due Soon' => ['icon' => 'clock', 'class' => 'text-yellow-500'],
+        'Overdue' => ['icon' => 'exclamation-triangle', 'class' => 'text-red-500'],
+        'Return Confirmation' => ['icon' => 'undo', 'class' => 'text-purple-500'],
+        'System' => ['icon' => 'info-circle', 'class' => 'text-blue-500'],
+    ];
+
+    foreach ($map as $key => $meta) {
+        if (stripos($type, $key) !== false || stripos($key, $type) !== false) {
+            return $meta;
+        }
+    }
+    if (stripos($type, 'Borrow') !== false) {
+        return $map['Borrowed'];
+    }
+    if (stripos($type, 'Return') !== false) {
+        return $map['Returned'];
+    }
+    return $map['System'];
 }
 
 /**
@@ -1900,20 +2065,23 @@ function deleteNotification($notificationId) {
 }
 
 /**
- * Delete all notifications for a member
+ * Delete all staff activity notifications.
  */
-function deleteAllMemberNotifications($memberId) {
+function deleteAllStaffNotifications(): bool {
     global $pdo;
-    
+
     try {
-        $stmt = $pdo->prepare("DELETE FROM notifications WHERE member_id = :member_id");
-        $stmt->bindParam(':member_id', $memberId, PDO::PARAM_INT);
-        $result = $stmt->execute();
-        
-        return $result;
+        return $pdo->exec('DELETE FROM notifications') !== false;
     } catch (PDOException $e) {
         return false;
     }
+}
+
+/**
+ * @deprecated Use deleteAllStaffNotifications()
+ */
+function deleteAllMemberNotifications($memberId) {
+    return deleteAllStaffNotifications();
 }
 
 /**

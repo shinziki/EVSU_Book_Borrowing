@@ -1,5 +1,5 @@
 <?php
-// Set timezone to Philippine Standard Time (UTC+8)
+// Philippine Standard Time (UTC+8) for all date/time operations
 date_default_timezone_set('Asia/Manila');
 
 // Database connection parameters
@@ -20,6 +20,13 @@ try {
     
     // Use utf8mb4 character set
     $pdo->exec("SET NAMES utf8mb4");
+
+    // Align MySQL NOW() with Philippine time (host may default to UK/UTC)
+    try {
+        $pdo->exec("SET time_zone = '+08:00'");
+    } catch (PDOException $tzException) {
+        error_log('Could not set MySQL time_zone to +08:00: ' . $tzException->getMessage());
+    }
 } catch (PDOException $e) {
     // If connection fails, display error and exit
     die("Connection failed: " . $e->getMessage());
