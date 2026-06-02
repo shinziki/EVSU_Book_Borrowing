@@ -370,7 +370,6 @@ $settingsTabs = isAdmin()
     ]
     : [
         'account' => ['label' => 'My Account', 'icon' => 'user'],
-        'permissions' => ['label' => 'My Permissions', 'icon' => 'key'],
     ];
 
 $activeTab = $_GET['tab'] ?? 'account';
