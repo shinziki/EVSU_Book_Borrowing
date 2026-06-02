@@ -435,7 +435,7 @@ if (isset($_SESSION['admin_id'])) {
                         <li>
                             <a href="reports.php" class="<?php echo $navLinkClass('reports.php'); ?>">
                                 <i class="fas fa-file-pdf w-5 mr-3 text-center"></i>
-                                <span>Annual Reports</span>
+                                <span>Generate Reports</span>
                             </a>
                         </li>
                         <?php endif; ?>

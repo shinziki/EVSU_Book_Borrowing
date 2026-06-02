@@ -448,14 +448,6 @@ include 'includes/header.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
-                
-                <div>
-                    <label for="barcode" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Barcode</label>
-                    <input type="text" id="barcode" name="barcode" 
-                           value="<?php echo ($memberData) ? htmlspecialchars($memberData['barcode']) : ''; ?>"
-                           placeholder="Leave empty to auto-generate"
-                           class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
-                </div>
 
                 <input type="hidden" name="status" value="<?php echo htmlspecialchars(($memberData && !empty($memberData['status'])) ? $memberData['status'] : 'active'); ?>">
                 
@@ -587,7 +579,6 @@ include 'includes/header.php';
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Student ID</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Course</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Barcode</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Join Date</th>
                         <?php if ($canManageMembers || staffHasPermission('transactions.view')): ?>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"><?php echo $canManageMembers ? 'Actions' : 'History'; ?></th>
@@ -644,9 +635,6 @@ include 'includes/header.php';
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="px-6 py-4">
-                                    <svg class="barcode-canvas" jsbarcode-format="CODE128" jsbarcode-value="<?php echo htmlspecialchars($member['barcode']); ?>" jsbarcode-textmargin="0" jsbarcode-fontoptions="bold" jsbarcode-height="40"></svg>
-                                </td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                     <?php echo date('M j, Y', strtotime($member['created_at'])); ?>
                                 </td>
@@ -671,7 +659,7 @@ include 'includes/header.php';
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No members found. Add a member to get started.</td>
+                            <td colspan="<?php echo ($canManageMembers || staffHasPermission('transactions.view')) ? '7' : '6'; ?>" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No members found. Add a member to get started.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

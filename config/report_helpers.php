@@ -18,18 +18,65 @@ function getReportLogoPath()
 }
 
 /**
- * Collect annual report data for a given calendar year.
+ * Build a normalized report date range from user inputs.
  */
-function getAnnualReportData($year)
+function buildReportRange(string $mode, int $year, int $month = 0, ?string $fromDate = null, ?string $toDate = null): array
+{
+    $nowYear = (int) date('Y');
+    $year = max($nowYear - 20, min($year, $nowYear));
+
+    if ($mode === 'monthly') {
+        $month = max(1, min($month, 12));
+        $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $end = date('Y-m-t 23:59:59', strtotime($start));
+        $label = date('F Y', strtotime($start));
+    } elseif ($mode === 'range') {
+        $from = $fromDate ?: date('Y-m-01');
+        $to = $toDate ?: date('Y-m-d');
+        $startDate = date('Y-m-d', strtotime($from));
+        $endDate = date('Y-m-d', strtotime($to));
+        if ($startDate > $endDate) {
+            $tmp = $startDate;
+            $startDate = $endDate;
+            $endDate = $tmp;
+        }
+        $start = $startDate . ' 00:00:00';
+        $end = $endDate . ' 23:59:59';
+        $label = date('M j, Y', strtotime($startDate)) . ' - ' . date('M j, Y', strtotime($endDate));
+        $mode = 'range';
+    } else {
+        $mode = 'annual';
+        $start = sprintf('%04d-01-01 00:00:00', $year);
+        $end = sprintf('%04d-12-31 23:59:59', $year);
+        $label = (string) $year;
+    }
+
+    return [
+        'mode' => $mode,
+        'year' => $year,
+        'month' => $month,
+        'from_date' => date('Y-m-d', strtotime($start)),
+        'to_date' => date('Y-m-d', strtotime($end)),
+        'start' => $start,
+        'end' => $end,
+        'label' => $label,
+    ];
+}
+
+/**
+ * Collect report data for any date range.
+ */
+function getReportDataByRange(string $start, string $end, string $periodLabel, string $mode = 'annual', ?int $year = null, ?int $month = null): array
 {
     global $pdo;
 
-    $year = (int) $year;
-    $start = sprintf('%04d-01-01 00:00:00', $year);
-    $end = sprintf('%04d-12-31 23:59:59', $year);
-
     $data = [
+        'mode' => $mode,
         'year' => $year,
+        'month' => $month,
+        'period_label' => $periodLabel,
+        'range_start' => $start,
+        'range_end' => $end,
         'generated_at' => date('F j, Y g:i A'),
         'summary' => [],
         'books' => [],
@@ -146,20 +193,53 @@ function getAnnualReportData($year)
 }
 
 /**
- * Build and stream annual PDF report with bordered tables.
+ * Collect annual report data for a given calendar year.
  */
-function generateAnnualReportPdf($year)
+function getAnnualReportData($year)
+{
+    $year = (int) $year;
+    $range = buildReportRange('annual', $year);
+    return getReportDataByRange($range['start'], $range['end'], $range['label'], 'annual', $range['year'], null);
+}
+
+/**
+ * Collect monthly report data for a year/month.
+ */
+function getMonthlyReportData($year, $month)
+{
+    $range = buildReportRange('monthly', (int) $year, (int) $month);
+    return getReportDataByRange($range['start'], $range['end'], $range['label'], 'monthly', $range['year'], $range['month']);
+}
+
+/**
+ * Collect custom date range report data.
+ */
+function getDateRangeReportData(string $fromDate, string $toDate)
+{
+    $range = buildReportRange('range', (int) date('Y'), 0, $fromDate, $toDate);
+    return getReportDataByRange($range['start'], $range['end'], $range['label'], 'range', null, null);
+}
+
+/**
+ * Build and stream PDF report with bordered tables.
+ */
+function generateReportPdf(array $data)
 {
     require_once __DIR__ . '/SimplePdf.php';
-    $data = getAnnualReportData($year);
     $pdf = new SimplePdf();
     $pdf->addPage();
 
+    $reportTitle = match ($data['mode'] ?? 'annual') {
+        'monthly' => 'Monthly Report ' . $data['period_label'],
+        'range' => 'Custom Date Range Report',
+        default => 'Annual Report ' . ($data['year'] ?? $data['period_label']),
+    };
+
     $pdf->writeReportCoverHeader(
         'EVSU Book Borrowing System',
-        'Annual Report ' . $data['year'],
+        $reportTitle,
         getReportLogoPath(),
-        'Generated: ' . $data['generated_at']
+        'Period: ' . $data['period_label'] . ' | Generated: ' . $data['generated_at']
     );
     $pdf->writeSpacer(1);
 
@@ -167,9 +247,9 @@ function generateAnnualReportPdf($year)
     $pdf->writeSectionHeading('1. Executive Summary');
     $pdf->drawKeyValueTable([
         'Total Books (catalog)' => $s['total_books'],
-        'Books Added in ' . $data['year'] => $s['books_added'],
+        'Books Added in Period' => $s['books_added'],
         'Total Members' => $s['total_members'],
-        'Members Registered in ' . $data['year'] => $s['members_added'],
+        'Members Registered in Period' => $s['members_added'],
         'Total Borrow Transactions' => $s['total_borrows'],
         'Total Returns' => $s['total_returns'],
         'Overdue Records' => $s['overdue_count'],
@@ -293,8 +373,18 @@ function generateAnnualReportPdf($year)
     );
 
     $pdf->writeSpacer(2);
-    $pdf->writeLine('End of Annual Report - EVSU Book Borrowing System (c) ' . $data['year']);
+    $pdf->writeLine('End of Report - EVSU Book Borrowing System');
 
-    $filename = 'EVSU_Annual_Report_' . $data['year'] . '.pdf';
+    $suffix = date('Ymd', strtotime($data['range_start'])) . '_to_' . date('Ymd', strtotime($data['range_end']));
+    $filename = 'EVSU_Report_' . $suffix . '.pdf';
     $pdf->output($filename);
+}
+
+/**
+ * Backward-compatible annual export entrypoint.
+ */
+function generateAnnualReportPdf($year)
+{
+    $data = getAnnualReportData($year);
+    generateReportPdf($data);
 }

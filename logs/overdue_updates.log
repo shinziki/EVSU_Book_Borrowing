@@ -158,3 +158,13 @@
 2026-06-02 15:36:53 - Found 1 active overdue books/transactions
 2026-06-02 15:36:53 - Updating book ID 5 (Everything is Fucked) status to Overdue. Borrow date was 2026-05-28 19:49:55, Due date was 2026-05-29 19:49:55 (Days since borrow: 5)
 2026-06-02 15:36:53 - Completed updateOverdueBooks. Updated 1 books.
+2026-06-02 16:08:50 - Starting updateOverdueBooks check
+2026-06-02 16:08:50 - Current system date: 2026-06-02
+2026-06-02 16:08:50 - Found 1 active overdue books/transactions
+2026-06-02 16:08:50 - Updating book ID 5 (Everything is Fucked) status to Overdue. Borrow date was 2026-05-28 19:49:55, Due date was 2026-05-29 19:49:55 (Days since borrow: 5)
+2026-06-02 16:08:50 - Completed updateOverdueBooks. Updated 1 books.
+2026-06-02 16:20:10 - Starting updateOverdueBooks check
+2026-06-02 16:20:10 - Current system date: 2026-06-02
+2026-06-02 16:20:10 - Found 1 active overdue books/transactions
+2026-06-02 16:20:10 - Updating book ID 5 (Everything is Fucked) status to Overdue. Borrow date was 2026-05-28 19:49:55, Due date was 2026-05-29 19:49:55 (Days since borrow: 5)
+2026-06-02 16:20:10 - Completed updateOverdueBooks. Updated 1 books.

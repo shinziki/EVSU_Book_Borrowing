@@ -5,20 +5,54 @@ require_once 'config/report_helpers.php';
 
 requireAdmin();
 
-$selectedYear = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
 $currentYear  = (int) date('Y');
 $minYear      = $currentYear - 10;
+$reportMode = $_GET['mode'] ?? 'annual';
+$reportMode = in_array($reportMode, ['annual', 'monthly', 'range'], true) ? $reportMode : 'annual';
+$selectedYear = isset($_GET['year']) ? (int) $_GET['year'] : $currentYear;
+$selectedMonth = isset($_GET['month']) ? (int) $_GET['month'] : (int) date('n');
+$fromDate = $_GET['from'] ?? date('Y-m-01');
+$toDate = $_GET['to'] ?? date('Y-m-d');
 
-if ($selectedYear < $minYear || $selectedYear > $currentYear) {
-    $selectedYear = $currentYear;
-}
+$range = buildReportRange($reportMode, $selectedYear, $selectedMonth, $fromDate, $toDate);
+$selectedYear = (int) $range['year'];
+$selectedMonth = (int) $range['month'];
+$fromDate = $range['from_date'];
+$toDate = $range['to_date'];
+
+$preview = getReportDataByRange(
+    $range['start'],
+    $range['end'],
+    $range['label'],
+    $range['mode'],
+    $range['mode'] === 'range' ? null : $selectedYear,
+    $range['mode'] === 'monthly' ? $selectedMonth : null
+);
 
 if (isset($_GET['download']) && $_GET['download'] === 'pdf') {
-    generateAnnualReportPdf($selectedYear);
+    generateReportPdf($preview);
 }
 
-$preview = getAnnualReportData($selectedYear);
 $summary = $preview['summary'];
+$periodLabel = $preview['period_label'];
+$reportTitle = match ($range['mode']) {
+    'monthly' => 'Monthly Reports',
+    'range' => 'Custom Date Range Reports',
+    default => 'Annual Reports',
+};
+$downloadQuery = http_build_query([
+    'mode' => $range['mode'],
+    'year' => $selectedYear,
+    'month' => $selectedMonth,
+    'from' => $fromDate,
+    'to' => $toDate,
+    'download' => 'pdf',
+]);
+$monthNames = [
+    1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+    5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+    9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December',
+];
 
 include 'includes/header.php';
 ?>
@@ -112,19 +146,51 @@ include 'includes/header.php';
 <div id="report-toolbar">
     <div class="max-w-[960px] mx-auto px-4 flex flex-col sm:flex-row sm:items-center gap-3">
         <div>
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white leading-tight">Annual Reports</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Full document preview of library data</p>
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white leading-tight"><?php echo htmlspecialchars($reportTitle); ?></h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Full document preview for: <?php echo htmlspecialchars($periodLabel); ?></p>
         </div>
-        <form method="GET" action="reports.php" class="flex items-center gap-2 sm:ml-auto">
-            <label for="year" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Report Year</label>
-            <select id="year" name="year" onchange="this.form.submit()"
+        <form method="GET" action="reports.php" class="flex flex-wrap items-center gap-2 sm:ml-auto">
+            <label for="mode" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Type</label>
+            <select id="mode" name="mode" onchange="this.form.submit()"
+                    class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm
+                           focus:ring-2 focus:ring-[#a91515] dark:bg-gray-700 dark:text-white">
+                <option value="annual" <?php echo $range['mode'] === 'annual' ? 'selected' : ''; ?>>Annual</option>
+                <option value="monthly" <?php echo $range['mode'] === 'monthly' ? 'selected' : ''; ?>>Monthly</option>
+                <option value="range" <?php echo $range['mode'] === 'range' ? 'selected' : ''; ?>>Date Range</option>
+            </select>
+
+            <label for="year" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Year</label>
+            <select id="year" name="year"
                     class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm
                            focus:ring-2 focus:ring-[#a91515] dark:bg-gray-700 dark:text-white">
                 <?php for ($y = $currentYear; $y >= $minYear; $y--): ?>
                     <option value="<?php echo $y; ?>" <?php echo $selectedYear === $y ? 'selected' : ''; ?>><?php echo $y; ?></option>
                 <?php endfor; ?>
             </select>
-            <a href="reports.php?year=<?php echo $selectedYear; ?>&download=pdf"
+
+            <label for="month" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Month</label>
+            <select id="month" name="month"
+                    class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm
+                           focus:ring-2 focus:ring-[#a91515] dark:bg-gray-700 dark:text-white">
+                <?php foreach ($monthNames as $m => $monthLabel): ?>
+                    <option value="<?php echo $m; ?>" <?php echo $selectedMonth === $m ? 'selected' : ''; ?>><?php echo htmlspecialchars($monthLabel); ?></option>
+                <?php endforeach; ?>
+            </select>
+
+            <label for="from" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">From</label>
+            <input type="date" id="from" name="from" value="<?php echo htmlspecialchars($fromDate); ?>"
+                   class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm
+                          focus:ring-2 focus:ring-[#a91515] dark:bg-gray-700 dark:text-white">
+            <label for="to" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">To</label>
+            <input type="date" id="to" name="to" value="<?php echo htmlspecialchars($toDate); ?>"
+                   class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm
+                          focus:ring-2 focus:ring-[#a91515] dark:bg-gray-700 dark:text-white">
+
+            <button type="submit"
+               class="flex items-center gap-1.5 bg-gray-700 hover:bg-gray-800 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition">
+                <i class="fas fa-filter"></i> Apply
+            </button>
+            <a href="reports.php?<?php echo htmlspecialchars($downloadQuery); ?>"
                class="flex items-center gap-1.5 bg-[#a91515] hover:bg-[#8f1212] text-white px-4 py-1.5 rounded-lg text-sm font-medium transition">
                 <i class="fas fa-file-pdf"></i> Download PDF
             </a>
@@ -147,7 +213,7 @@ include 'includes/header.php';
             ?>" alt="Logo" class="logo mx-auto">
         <?php endif; ?>
         <h1>EVSU Book Borrowing System</h1>
-        <h2>Annual Report &mdash; <?php echo $selectedYear; ?></h2>
+        <h2><?php echo htmlspecialchars($reportTitle); ?> &mdash; <?php echo htmlspecialchars($periodLabel); ?></h2>
         <p>Generated: <?php echo $preview['generated_at']; ?></p>
     </div>
 
@@ -159,9 +225,9 @@ include 'includes/header.php';
                 <?php
                 $kvRows = [
                     'Total Books (catalog)'                          => $summary['total_books'],
-                    'Books Added in ' . $selectedYear               => $summary['books_added'],
+                    'Books Added in Period'                          => $summary['books_added'],
                     'Total Members'                                  => $summary['total_members'],
-                    'Members Registered in ' . $selectedYear        => $summary['members_added'],
+                    'Members Registered in Period'                   => $summary['members_added'],
                     'Total Borrow Transactions'                      => $summary['total_borrows'],
                     'Total Returns'                                  => $summary['total_returns'],
                     'Overdue Records'                                => $summary['overdue_count'],
@@ -288,7 +354,7 @@ include 'includes/header.php';
             </table>
         </div>
         <?php else: ?>
-            <p class="rpt-empty">No transactions for <?php echo $selectedYear; ?>.</p>
+            <p class="rpt-empty">No transactions for <?php echo htmlspecialchars($periodLabel); ?>.</p>
         <?php endif; ?>
     </div>
 
@@ -320,7 +386,7 @@ include 'includes/header.php';
             </table>
         </div>
         <?php else: ?>
-            <p class="rpt-empty">No penalties for <?php echo $selectedYear; ?>.</p>
+            <p class="rpt-empty">No penalties for <?php echo htmlspecialchars($periodLabel); ?>.</p>
         <?php endif; ?>
     </div>
 
@@ -358,7 +424,7 @@ include 'includes/header.php';
             </table>
         </div>
         <?php else: ?>
-            <p class="rpt-empty">No overdue activity for <?php echo $selectedYear; ?>.</p>
+            <p class="rpt-empty">No overdue activity for <?php echo htmlspecialchars($periodLabel); ?>.</p>
         <?php endif; ?>
     </div>
 
@@ -390,13 +456,13 @@ include 'includes/header.php';
             </table>
         </div>
         <?php else: ?>
-            <p class="rpt-empty">No notifications logged for <?php echo $selectedYear; ?>.</p>
+            <p class="rpt-empty">No notifications logged for <?php echo htmlspecialchars($periodLabel); ?>.</p>
         <?php endif; ?>
     </div>
 
     <!-- Footer -->
     <div class="text-center text-xs text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-6 mt-4">
-        End of Annual Report &mdash; EVSU Book Borrowing System &copy; <?php echo $selectedYear; ?>
+        End of Report &mdash; EVSU Book Borrowing System &copy; <?php echo date('Y'); ?> (<?php echo htmlspecialchars($periodLabel); ?>)
     </div>
 </div>
 
@@ -418,6 +484,38 @@ window.addEventListener('scroll', () => {
         btn.classList.add('opacity-0','pointer-events-none');
     }
 });
+
+// Show relevant filter controls based on selected report mode.
+const reportModeSelect = document.getElementById('mode');
+const yearEl = document.getElementById('year');
+const monthEl = document.getElementById('month');
+const fromEl = document.getElementById('from');
+const toEl = document.getElementById('to');
+
+function setControlVisibility() {
+    if (!reportModeSelect) return;
+    const mode = reportModeSelect.value;
+    const toggle = (el, show) => {
+        if (!el || !el.parentElement) return;
+        const label = document.querySelector(`label[for="${el.id}"]`);
+        if (label) label.style.display = show ? '' : 'none';
+        el.style.display = show ? '' : 'none';
+        if (!show) {
+            el.disabled = true;
+        } else {
+            el.disabled = false;
+        }
+    };
+    toggle(yearEl, mode === 'annual' || mode === 'monthly');
+    toggle(monthEl, mode === 'monthly');
+    toggle(fromEl, mode === 'range');
+    toggle(toEl, mode === 'range');
+}
+
+if (reportModeSelect) {
+    reportModeSelect.addEventListener('change', setControlVisibility);
+    setControlVisibility();
+}
 </script>
 
 <?php include 'includes/footer.php'; ?>
