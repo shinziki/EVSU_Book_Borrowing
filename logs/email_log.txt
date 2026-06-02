@@ -161,3 +161,34 @@
 2026-05-29 17:03:21 - Using provided alt body
 2026-05-29 17:03:21 - Attempting to send email via SMTP
 2026-05-29 17:03:26 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-06-02 11:25:33 - PHPMailer: INSTALLED
+2026-06-02 11:27:53 - PHPMailer: INSTALLED
+2026-06-02 11:27:53 - Attempting to send email to: miguelito.bacho@evsu.edu.ph | Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+2026-06-02 11:27:53 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260602_112753_miguelito_bacho_evsu_edu_ph.txt
+2026-06-02 11:27:53 - PHPMailer detection check: FOUND
+2026-06-02 11:27:53 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-06-02 11:27:53 - Set from: evsubookborrowing@gmail.com, to: miguelito.bacho@evsu.edu.ph
+2026-06-02 11:27:53 - Detected HTML email
+2026-06-02 11:27:53 - Using provided alt body
+2026-06-02 11:27:53 - Attempting to send email via SMTP
+2026-06-02 11:27:57 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-06-02 11:28:20 - PHPMailer: INSTALLED
+2026-06-02 11:28:20 - Attempting to send email to: miguelito.bacho@evsu.edu.ph | Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+2026-06-02 11:28:20 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260602_112820_miguelito_bacho_evsu_edu_ph.txt
+2026-06-02 11:28:20 - PHPMailer detection check: FOUND
+2026-06-02 11:28:20 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-06-02 11:28:20 - Set from: evsubookborrowing@gmail.com, to: miguelito.bacho@evsu.edu.ph
+2026-06-02 11:28:20 - Detected HTML email
+2026-06-02 11:28:20 - Using provided alt body
+2026-06-02 11:28:20 - Attempting to send email via SMTP
+2026-06-02 11:28:23 - Email status: SUCCESS (sent via PHPMailer SMTP)
+2026-06-02 11:29:57 - PHPMailer: INSTALLED
+2026-06-02 11:29:57 - Attempting to send email to: miguelito.bacho@evsu.edu.ph | Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+2026-06-02 11:29:57 - Email saved to file: C:\xampp\htdocs\EVSU_Book_Borrowing\config/../emails/email_20260602_112957_miguelito_bacho_evsu_edu_ph.txt
+2026-06-02 11:29:57 - PHPMailer detection check: FOUND
+2026-06-02 11:29:57 - Using SMTP: host=smtp.gmail.com, port=465, secure=ssl
+2026-06-02 11:29:57 - Set from: evsubookborrowing@gmail.com, to: miguelito.bacho@evsu.edu.ph
+2026-06-02 11:29:57 - Detected HTML email
+2026-06-02 11:29:57 - Using provided alt body
+2026-06-02 11:29:57 - Attempting to send email via SMTP
+2026-06-02 11:30:02 - Email status: SUCCESS (sent via PHPMailer SMTP)

@@ -1,162 +1,358 @@
 <?php
-require_once 'config/db_connect.php';
-require_once 'config/functions.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Require login to access this page
-requireLogin();
+require_once __DIR__ . '/config/functions.php';
 
-// Update overdue books
-updateOverdueBooks();
+$isLoggedIn = function_exists('isLoggedIn') && isLoggedIn();
+$appEntryUrl = $isLoggedIn ? 'dashboard.php' : 'login.php';
+$loginUrl = 'login.php';
 
-// Get dashboard statistics
-$stats = getDashboardStats();
+$logoCandidates = [
+    'logo/EVSU_Official_Logo.png',
+    'logo/EVSU_Official_Logo.jpg',
+    'images/logo.svg',
+];
+$logoSrc = 'images/logo.svg';
+foreach ($logoCandidates as $candidate) {
+    if (is_file(__DIR__ . '/' . $candidate)) {
+        $logoSrc = $candidate;
+        break;
+    }
+}
 
-// Get recent activities
-$recentActivities = getRecentActivities(3);
+$bgImage = 'assets/images/evsu-campus-bg.png';
+if (!is_file(__DIR__ . '/' . $bgImage)) {
+    $bgImage = '';
+}
 
-// Include header
-include 'includes/header.php';
+$smallTiles = [
+    ['label' => 'Borrow Books', 'icon' => 'fa-hand-holding', 'href' => $appEntryUrl, 'bg' => '#8bc34a'],
+    ['label' => 'Return Books', 'icon' => 'fa-undo', 'href' => $isLoggedIn ? 'return.php' : $loginUrl, 'bg' => '#ffc107'],
+    ['label' => 'Book Catalog', 'icon' => 'fa-book', 'href' => $isLoggedIn ? 'books.php' : $loginUrl, 'bg' => '#ffffff', 'dark' => true],
+    ['label' => 'Members', 'icon' => 'fa-users', 'href' => $isLoggedIn ? 'members.php' : $loginUrl, 'bg' => '#03a9f4'],
+    ['label' => 'Transactions', 'icon' => 'fa-exchange-alt', 'href' => $isLoggedIn ? 'transactions.php' : $loginUrl, 'bg' => '#b71c1c'],
+    ['label' => 'Overdue Books', 'icon' => 'fa-exclamation-circle', 'href' => $isLoggedIn ? 'overdue.php' : $loginUrl, 'bg' => '#009688'],
+    ['label' => 'Penalties', 'icon' => 'fa-file-invoice-dollar', 'href' => $isLoggedIn ? 'penalties_record.php' : $loginUrl, 'bg' => '#ff9800'],
+    ['label' => 'Book Metrics', 'icon' => 'fa-chart-line', 'href' => $isLoggedIn ? 'book_metrics.php' : $loginUrl, 'bg' => '#9c27b0'],
+    ['label' => 'Notifications', 'icon' => 'fa-bell', 'href' => $isLoggedIn ? 'notifications.php' : $loginUrl, 'bg' => '#cddc39', 'dark' => true],
+    ['label' => 'Staff Login', 'icon' => 'fa-sign-in-alt', 'href' => $loginUrl, 'bg' => '#e91e63'],
+    ['label' => 'Dashboard', 'icon' => 'fa-chart-bar', 'href' => $isLoggedIn ? 'dashboard.php' : $loginUrl, 'bg' => '#607d8b'],
+    ['label' => 'Annual Reports', 'icon' => 'fa-file-pdf', 'href' => $isLoggedIn ? 'reports.php' : $loginUrl, 'bg' => '#795548'],
+];
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVSU Book Borrowing System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Source Sans 3', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #1a1a1a;
+        }
 
-<div class="mb-6">
-    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h2>
-    <p class="text-gray-600 dark:text-gray-400">Overview of library operations</p>
-</div>
+        .portal-header {
+            background: #fff;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 0.75rem 1.5rem;
+            position: relative;
+            z-index: 20;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .portal-header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .portal-header img {
+            height: 64px;
+            width: auto;
+        }
+        .portal-header-text {
+            text-align: left;
+        }
+        .portal-header-text .line1 {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: clamp(1.1rem, 3vw, 1.65rem);
+            font-weight: 700;
+            color: #8b0000;
+            letter-spacing: 0.02em;
+            line-height: 1.15;
+        }
+        .portal-header-text .line2 {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: clamp(0.85rem, 2.2vw, 1.15rem);
+            font-weight: 700;
+            color: #8b0000;
+            letter-spacing: 0.08em;
+        }
 
-<div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
-    <div class="grid-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 md:p-6">
-        <div class="flex items-center">
-            <div class="bg-primary-100 dark:bg-primary-900 p-2 md:p-3 rounded-lg mr-3 md:mr-4">
-                <i class="fas fa-book text-primary-600 dark:text-primary-300 text-xl md:text-2xl"></i>
-            </div>
-            <div>
-                <p class="text-gray-500 dark:text-gray-400 text-xs md:text-sm">Total Books</p>
-                <p class="text-lg md:text-2xl font-bold text-gray-800 dark:text-white"><?php echo $stats['total_books']; ?></p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="grid-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 md:p-6">
-        <div class="flex items-center">
-            <div class="bg-green-100 dark:bg-green-900 p-2 md:p-3 rounded-lg mr-3 md:mr-4">
-                <i class="fas fa-users text-green-600 dark:text-green-300 text-xl md:text-2xl"></i>
-            </div>
-            <div>
-                <p class="text-gray-500 dark:text-gray-400 text-xs md:text-sm">Members</p>
-                <p class="text-lg md:text-2xl font-bold text-gray-800 dark:text-white"><?php echo $stats['total_members']; ?></p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="grid-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 md:p-6">
-        <div class="flex items-center">
-            <div class="bg-yellow-100 dark:bg-yellow-900 p-2 md:p-3 rounded-lg mr-3 md:mr-4">
-                <i class="fas fa-hand-holding text-yellow-600 dark:text-yellow-300 text-xl md:text-2xl"></i>
-            </div>
-            <div>
-                <p class="text-gray-500 dark:text-gray-400 text-xs md:text-sm">Borrowed</p>
-                <p class="text-lg md:text-2xl font-bold text-gray-800 dark:text-white"><?php echo $stats['borrowed_books']; ?></p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="grid-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 md:p-6">
-        <div class="flex items-center">
-            <div class="bg-red-100 dark:bg-red-900 p-2 md:p-3 rounded-lg mr-3 md:mr-4">
-                <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-300 text-xl md:text-2xl"></i>
-            </div>
-            <div>
-                <p class="text-gray-500 dark:text-gray-400 text-xs md:text-sm">Overdue</p>
-                <p class="text-lg md:text-2xl font-bold text-gray-800 dark:text-white"><?php echo $stats['overdue_books']; ?></p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 md:p-6">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Recent Activity</h3>
-        <div class="space-y-4">
-            <?php if (count($recentActivities) > 0): ?>
-                <?php foreach ($recentActivities as $index => $activity): ?>
-                    <div class="flex items-start <?php echo ($index < count($recentActivities) - 1) ? 'border-b border-gray-200 dark:border-gray-700 pb-4' : ''; ?>">
-                        <?php if ($activity['status'] === 'Borrowed'): ?>
-                            <div class="bg-green-100 dark:bg-green-900 p-2 rounded-lg mr-3 flex-shrink-0">
-                                <i class="fas fa-hand-holding text-green-600 dark:text-green-300"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="font-medium text-gray-800 dark:text-white truncate"><?php echo htmlspecialchars($activity['book_title']); ?></p>
-                                <p class="text-gray-600 dark:text-gray-400 text-sm">Borrowed by <?php echo htmlspecialchars($activity['member_name']); ?></p>
-                                <p class="text-gray-500 dark:text-gray-500 text-xs mt-1"><?php echo date('M j, Y', strtotime($activity['borrow_date'])); ?></p>
-                            </div>
-                        <?php elseif ($activity['status'] === 'Returned'): ?>
-                            <div class="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg mr-3 flex-shrink-0">
-                                <i class="fas fa-undo text-blue-600 dark:text-blue-300"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="font-medium text-gray-800 dark:text-white truncate"><?php echo htmlspecialchars($activity['book_title']); ?></p>
-                                <p class="text-gray-600 dark:text-gray-400 text-sm">Returned by <?php echo htmlspecialchars($activity['member_name']); ?></p>
-                                <p class="text-gray-500 dark:text-gray-500 text-xs mt-1"><?php echo date('M j, Y', strtotime($activity['return_date'])); ?></p>
-                            </div>
-                        <?php else: ?>
-                            <div class="bg-red-100 dark:bg-red-900 p-2 rounded-lg mr-3 flex-shrink-0">
-                                <i class="fas fa-exclamation-circle text-red-600 dark:text-red-300"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="font-medium text-gray-800 dark:text-white truncate"><?php echo htmlspecialchars($activity['book_title']); ?></p>
-                                <p class="text-gray-600 dark:text-gray-400 text-sm">Overdue from <?php echo htmlspecialchars($activity['member_name']); ?></p>
-                                <p class="text-gray-500 dark:text-gray-500 text-xs mt-1">Due: <?php echo date('M j, Y', strtotime($activity['borrow_date'])); ?></p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
+        .portal-hero {
+            flex: 1;
+            position: relative;
+            padding: 2rem 1rem 1.5rem;
+            overflow: hidden;
+        }
+        .portal-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            <?php if ($bgImage): ?>
+            background: url('<?php echo htmlspecialchars($bgImage); ?>') center / cover no-repeat;
             <?php else: ?>
-                <div class="text-center py-4 text-gray-500 dark:text-gray-400">
-                    <p>No recent activities found</p>
+            background: linear-gradient(135deg, #6b7d8f 0%, #9aabbc 50%, #c4d0dc 100%);
+            <?php endif; ?>
+            filter: blur(4px);
+            transform: scale(1.05);
+        }
+        .portal-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.35);
+        }
+        .portal-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .metro-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto;
+            gap: 6px;
+        }
+
+        .tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            text-decoration: none;
+            color: #fff;
+            padding: 1rem 0.75rem;
+            min-height: 110px;
+            transition: filter 0.15s ease, transform 0.15s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .tile:hover {
+            filter: brightness(1.08);
+            transform: scale(1.01);
+            z-index: 1;
+        }
+        .tile-lg {
+            min-height: 130px;
+            grid-column: span 1;
+        }
+        .tile-lg .tile-icon {
+            font-size: 2.75rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.95;
+        }
+        .tile-lg .tile-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.25;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+        .tile-brand {
+            background: #7a0019;
+            cursor: default;
+            pointer-events: none;
+        }
+        .tile-brand img {
+            height: 72px;
+            width: auto;
+            margin-bottom: 0.35rem;
+        }
+        .tile-brand .tile-title {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+        }
+        .tile-green { background: #2e7d32; }
+        .tile-coral { background: #c75b4a; }
+        .tile-purple { background: #6a4c93; }
+
+        .metro-lower {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .tiles-small {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+        .tile-sm {
+            min-height: 88px;
+            padding: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .tile-sm .tile-icon {
+            font-size: 1.35rem;
+            margin-bottom: 0.35rem;
+        }
+        .tile-sm.text-dark { color: #222; }
+
+        .tile-map {
+            background: #fff;
+            min-height: 100%;
+            padding: 0;
+            display: block;
+        }
+        .tile-map iframe {
+            width: 100%;
+            height: 100%;
+            min-height: 280px;
+            border: 0;
+            display: block;
+        }
+
+        .portal-title {
+            text-align: center;
+            margin-top: 1.75rem;
+            font-size: clamp(1.35rem, 4vw, 2rem);
+            font-weight: 700;
+            color: #111;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+        }
+
+        .portal-footer {
+            background: #f0f0f0;
+            border-top: 1px solid #ddd;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #444;
+            line-height: 1.6;
+            position: relative;
+            z-index: 20;
+        }
+
+        .logged-in-banner {
+            text-align: center;
+            margin-bottom: 0.75rem;
+        }
+        .logged-in-banner a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.92);
+            color: #7a0019;
+            font-weight: 600;
+            padding: 0.45rem 1rem;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .logged-in-banner a:hover { background: #fff; }
+
+        @media (max-width: 900px) {
+            .metro-grid { grid-template-columns: repeat(2, 1fr); }
+            .metro-lower { grid-template-columns: 1fr; }
+            .tiles-small { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 520px) {
+            .metro-grid { grid-template-columns: 1fr; }
+            .tiles-small { grid-template-columns: repeat(2, 1fr); }
+            .portal-header-inner { flex-direction: column; text-align: center; }
+            .portal-header-text { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <header class="portal-header">
+        <div class="portal-header-inner">
+            <img src="<?php echo htmlspecialchars($logoSrc); ?>" alt="EVSU Logo" onerror="this.style.display='none'">
+            <div class="portal-header-text">
+                <div class="line1">EASTERN VISAYAS</div>
+                <div class="line2">STATE UNIVERSITY</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="portal-hero">
+        <div class="portal-content">
+            <?php if ($isLoggedIn): ?>
+            <div class="logged-in-banner">
+                <a href="dashboard.php"><i class="fas fa-arrow-right"></i> Continue to Dashboard (signed in)</a>
+            </div>
+            <?php endif; ?>
+
+            <div class="metro-grid">
+                <a href="<?php echo htmlspecialchars($appEntryUrl); ?>" class="tile tile-lg tile-green">
+                    <i class="fas fa-book-reader tile-icon"></i>
+                    <span class="tile-title">Book Borrowing<br>System</span>
+                </a>
+
+                <div class="tile tile-lg tile-brand">
+                    <img src="<?php echo htmlspecialchars($logoSrc); ?>" alt="EVSU">
+                    <span class="tile-title">EASTERN VISAYAS<br>STATE UNIVERSITY</span>
                 </div>
-            <?php endif; ?>
-        </div>
-    </div>
-    
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 md:p-6">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Quick Actions</h3>
-        <div class="grid grid-cols-2 gap-3 sm:block sm:space-y-4">
-            <?php if (isAdmin()): ?>
-            <a href="books.php?action=add" class="w-full flex flex-col sm:flex-row items-center justify-center sm:justify-start p-3 sm:p-4 rounded-lg bg-primary-50 dark:bg-gray-700 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-gray-600 transition">
-                <i class="fas fa-plus-circle mb-1 sm:mb-0 sm:mr-3 text-lg"></i>
-                <span class="text-sm sm:text-base">Add Book</span>
-            </a>
-            <a href="reports.php" class="w-full flex flex-col sm:flex-row items-center justify-center sm:justify-start p-3 sm:p-4 rounded-lg bg-red-50 dark:bg-gray-700 text-[#a91515] dark:text-red-300 hover:bg-red-100 dark:hover:bg-gray-600 transition">
-                <i class="fas fa-file-pdf mb-1 sm:mb-0 sm:mr-3 text-lg"></i>
-                <span class="text-sm sm:text-base">Annual Report (PDF)</span>
-            </a>
-            <?php endif; ?>
 
-            <?php if (isStaff() && staffHasPermission('members.add')): ?>
-            <a href="members.php?action=add" class="w-full flex flex-col sm:flex-row items-center justify-center sm:justify-start p-3 sm:p-4 rounded-lg bg-green-50 dark:bg-gray-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-gray-600 transition">
-                <i class="fas fa-user-plus mb-1 sm:mb-0 sm:mr-3 text-lg"></i>
-                <span class="text-sm sm:text-base">Add Member</span>
-            </a>
-            <?php endif; ?>
-            
-            <?php if (isStaff() && staffHasPermission('borrow.process')): ?>
-            <a href="borrow.php" class="w-full flex flex-col sm:flex-row items-center justify-center sm:justify-start p-3 sm:p-4 rounded-lg bg-blue-50 dark:bg-gray-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-gray-600 transition">
-                <i class="fas fa-barcode mb-1 sm:mb-0 sm:mr-3 text-lg"></i>
-                <span class="text-sm sm:text-base">Borrow</span>
-            </a>
-            <?php endif; ?>
-            
-            <?php if (isStaff() && staffHasPermission('return.process')): ?>
-            <a href="return.php" class="w-full flex flex-col sm:flex-row items-center justify-center sm:justify-start p-3 sm:p-4 rounded-lg bg-purple-50 dark:bg-gray-700 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-gray-600 transition">
-                <i class="fas fa-undo mb-1 sm:mb-0 sm:mr-3 text-lg"></i>
-                <span class="text-sm sm:text-base">Return</span>
-            </a>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
+                <a href="<?php echo htmlspecialchars($loginUrl); ?>" class="tile tile-lg tile-coral">
+                    <i class="fas fa-user-lock tile-icon"></i>
+                    <span class="tile-title">Staff &amp; Admin<br>Login</span>
+                </a>
 
-<?php
-// Include footer
-include 'includes/footer.php';
-?> 
+                <a href="<?php echo htmlspecialchars($isLoggedIn ? 'books.php' : $loginUrl); ?>" class="tile tile-lg tile-purple">
+                    <i class="fas fa-book-open tile-icon"></i>
+                    <span class="tile-title">Library<br>Catalog</span>
+                </a>
+            </div>
+
+            <div class="metro-lower">
+                <div class="tiles-small">
+                    <?php foreach ($smallTiles as $tile): ?>
+                        <a href="<?php echo htmlspecialchars($tile['href']); ?>"
+                           class="tile tile-sm<?php echo !empty($tile['dark']) ? ' text-dark' : ''; ?>"
+                           style="background: <?php echo htmlspecialchars($tile['bg']); ?>;">
+                            <i class="fas <?php echo htmlspecialchars($tile['icon']); ?> tile-icon"></i>
+                            <span><?php echo htmlspecialchars($tile['label']); ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="tile-map">
+                    <iframe
+                        title="Eastern Visayas State University - Tacloban"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                        src="https://maps.google.com/maps?q=Eastern+Visayas+State+University,+Tacloban+City&amp;t=&amp;z=16&amp;ie=UTF8&amp;iwloc=&amp;output=embed">
+                    </iframe>
+                </div>
+            </div>
+
+            <h1 class="portal-title">EVSU Book Borrowing System</h1>
+        </div>
+    </main>
+
+    <footer class="portal-footer">
+        <p>Eastern Visayas State University — Copyright &copy; 2012-<?php echo date('Y'); ?> All Rights Reserved</p>
+        <p>EVSU Book Borrowing System — Library operations portal for staff and administrators.</p>
+    </footer>
+</body>
+</html>

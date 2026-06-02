@@ -421,14 +421,24 @@ include 'includes/header.php';
                     <?php if (strtotime($transactionInfo['due_date']) < time()): ?>
                         <?php
                         $latePenalty = (float) ($transactionInfo['penalty_amount'] ?? 0);
+                        $lateDays = 0;
+                        $lateDailyRate = (float) (getPenaltySettings()['late_return_fee'] ?? 25.00);
                         if ($latePenalty <= 0) {
+                            $lateDays = getOverdueDays($transactionInfo);
                             $latePenalty = calculateLateReturnPenalty($transactionInfo);
                         }
                         ?>
                         <?php if ($latePenalty > 0): ?>
                         <div class="flex justify-between">
                             <span class="text-gray-600 dark:text-gray-400">Late Penalty:</span>
-                            <span class="font-medium text-red-600 dark:text-red-400">₱<?php echo number_format($latePenalty, 2); ?></span>
+                            <span class="font-medium text-red-600 dark:text-red-400">
+                                ₱<?php echo number_format($latePenalty, 2); ?>
+                                <?php if ($lateDays > 0): ?>
+                                    <span class="block text-xs font-normal text-gray-500 dark:text-gray-400">
+                                        <?php echo $lateDays; ?> day<?php echo $lateDays === 1 ? '' : 's'; ?> × ₱<?php echo number_format($lateDailyRate, 0); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </span>
                         </div>
                         <?php else: ?>
                         <div class="flex justify-between">

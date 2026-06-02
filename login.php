@@ -171,6 +171,9 @@ $darkModeClass = ($theme === 'dark') ? 'dark' : '';
             </form>
             
             <div class="mt-4 text-center">
+                <a href="index.php" class="inline-flex items-center text-sm text-[#a91515] hover:underline mb-3">
+                    <i class="fas fa-th-large mr-1"></i> Back to Portal Home
+                </a>
                 <button id="theme-toggle" class="inline-flex items-center p-2 text-xs text-gray-500 dark:text-gray-400">
                     <i class="fas fa-moon dark:hidden mr-1"></i>
                     <i class="fas fa-sun hidden dark:block mr-1"></i>

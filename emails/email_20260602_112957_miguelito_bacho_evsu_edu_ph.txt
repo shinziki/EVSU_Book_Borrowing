@@ -1,0 +1,45 @@
+To: miguelito.bacho@evsu.edu.ph
+From: EVSU Book Borrowing System <evsubookborrowing@gmail.com>
+Subject: Book Borrowed Confirmation - EVSU Book Borrowing System
+Headers: From: EVSU Book Borrowing System <evsubookborrowing@gmail.com>
+Content-Type: text/html; charset=UTF-8
+
+Date: 2026-06-02 11:29:57
+-------------------------------------------
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; line-height: 1.5; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .section { margin-bottom: 20px; }
+        .info-box { background-color: #f9f9f9; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>EVSU Book Borrowing System</h1>
+            <p>Book Borrowed Confirmation</p>
+        </div>
+        
+        <div class='section'>
+            <p>Dear Miguelito Bacho,</p>
+            <p>You have borrowed the following book from EVSU Book Borrowing System:</p>
+            
+            <div class='info-box'>
+                <p><strong>Title:</strong> Malice</p>
+                <p><strong>Author:</strong> Pintip Dunn</p>
+                <p><strong>Borrow Date:</strong> June 2, 2026</p>
+                <p><strong>Due Date:</strong> June 3, 2026</p>
+            </div>
+            
+            <p>Please return the book on or before the due date to avoid penalties.</p>
+            <p>Late returns may incur a penalty fee.</p>
+            
+            <p>Thank you for using EVSU Book Borrowing System!</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -317,6 +317,61 @@ function getMemberCourseOptions() {
 }
 
 /**
+ * EVSU member email domain (username only in forms; full address saved as username@evsu.edu.ph).
+ */
+function getEvsuEmailDomain(): string {
+    return 'evsu.edu.ph';
+}
+
+function extractEvsuEmailUsername(?string $email): string {
+    if ($email === null || trim($email) === '') {
+        return '';
+    }
+    $email = strtolower(trim($email));
+    $suffix = '@' . getEvsuEmailDomain();
+    $suffixLen = strlen($suffix);
+    if (strlen($email) > $suffixLen && substr($email, -$suffixLen) === $suffix) {
+        return substr($email, 0, -$suffixLen);
+    }
+    if (strpos($email, '@') !== false) {
+        return (string) explode('@', $email, 2)[0];
+    }
+    return $email;
+}
+
+function buildEvsuEmail(string $usernameInput): ?string {
+    $username = strtolower(trim($usernameInput));
+    if ($username === '') {
+        return null;
+    }
+
+    $suffix = '@' . getEvsuEmailDomain();
+    $suffixLen = strlen($suffix);
+    if (strlen($username) > $suffixLen && substr($username, -$suffixLen) === $suffix) {
+        $username = substr($username, 0, -$suffixLen);
+    } elseif (strpos($username, '@') !== false) {
+        return null;
+    }
+
+    $username = ltrim($username, '@');
+    if ($username === '' || !preg_match('/^[a-z0-9._-]+$/', $username)) {
+        return null;
+    }
+
+    return $username . $suffix;
+}
+
+function getMemberEmailValidationError(string $usernameInput): ?string {
+    if (trim($usernameInput) === '') {
+        return 'EVSU email username is required.';
+    }
+    if (buildEvsuEmail($usernameInput) === null) {
+        return 'Enter a valid EVSU email username (letters, numbers, dots, hyphens, and underscores only). Other email domains are not allowed.';
+    }
+    return null;
+}
+
+/**
  * Check if user is logged in
  */
 function isLoggedIn() {
@@ -389,6 +444,7 @@ function getStaffPermissionDefinitions() {
             'icon' => 'chart-bar',
             'permissions' => [
                 ['key' => 'dashboard.view', 'label' => 'View dashboard & statistics', 'default' => true],
+                ['key' => 'metrics.view', 'label' => 'View book borrow metrics (most / least borrowed)', 'default' => true],
             ],
         ],
         [
@@ -475,7 +531,9 @@ function getDefaultStaffPermissionKeys() {
  */
 function getPagePermissionMap() {
     return [
-        'index.php' => 'dashboard.view',
+        'index.php' => null,
+        'dashboard.php' => 'dashboard.view',
+        'book_metrics.php' => ['metrics.view', 'dashboard.view'],
         'books.php' => 'books.view',
         'borrow.php' => 'borrow.process',
         'return.php' => 'return.process',
@@ -625,6 +683,15 @@ function canAccessPage($page = null) {
         return true;
     }
 
+    if (is_array($required)) {
+        foreach ($required as $permissionKey) {
+            if (staffHasPermission($permissionKey)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     return staffHasPermission($required);
 }
 
@@ -633,11 +700,11 @@ function canAccessPage($page = null) {
  */
 function getDefaultLandingPage() {
     if (isAdmin()) {
-        return 'index.php';
+        return 'dashboard.php';
     }
     if (isStaff()) {
         $priority = [
-            'index.php' => 'dashboard.view',
+            'dashboard.php' => 'dashboard.view',
             'borrow.php' => 'borrow.process',
             'return.php' => 'return.process',
             'members.php' => 'members.view',
@@ -833,6 +900,119 @@ function getRecentActivities($limit = 3) {
 }
 
 /**
+ * Years that have at least one borrow (for metrics filters).
+ */
+function getTransactionBorrowYears(): array {
+    global $pdo;
+
+    try {
+        $stmt = $pdo->query("
+            SELECT DISTINCT YEAR(borrow_date) AS year
+            FROM transactions
+            WHERE borrow_date IS NOT NULL
+            ORDER BY year DESC
+        ");
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+/**
+ * Book borrow counts ranked most or least (includes books with zero borrows).
+ *
+ * @param string $order 'DESC' for most borrowed, 'ASC' for least
+ */
+function getBookBorrowRankings(string $order = 'DESC', int $limit = 25, ?int $year = null): array {
+    global $pdo;
+
+    $limit = max(1, min(100, $limit));
+    $order = strtoupper($order) === 'ASC' ? 'ASC' : 'DESC';
+
+    $joinExtra = '';
+    $params = [];
+    if ($year !== null && $year > 0) {
+        $joinExtra = ' AND YEAR(t.borrow_date) = :year';
+        $params[':year'] = $year;
+    }
+
+    $sql = "
+        SELECT b.id, b.title, b.author, b.barcode, b.status,
+               COUNT(t.id) AS borrow_count,
+               MAX(t.borrow_date) AS last_borrowed
+        FROM books b
+        LEFT JOIN transactions t ON t.book_id = b.id{$joinExtra}
+        GROUP BY b.id, b.title, b.author, b.barcode, b.status
+        ORDER BY borrow_count {$order}, b.title ASC
+        LIMIT :limit
+    ";
+
+    try {
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+/**
+ * Summary stats for book borrow metrics page.
+ */
+function getBookBorrowMetricsSummary(?int $year = null): array {
+    global $pdo;
+
+    $joinExtra = '';
+    $params = [];
+    if ($year !== null && $year > 0) {
+        $joinExtra = ' AND YEAR(t.borrow_date) = :year';
+        $params[':year'] = $year;
+    }
+
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM books");
+        $stmt->execute();
+        $totalBooks = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare("
+            SELECT COUNT(DISTINCT b.id)
+            FROM books b
+            INNER JOIN transactions t ON t.book_id = b.id{$joinExtra}
+        ");
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+        $booksWithBorrows = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM transactions t WHERE 1=1" . ($year ? ' AND YEAR(t.borrow_date) = :year' : ''));
+        if ($year) {
+            $stmt->bindValue(':year', $year, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+        $totalBorrows = (int) $stmt->fetchColumn();
+
+        return [
+            'total_books' => $totalBooks,
+            'books_with_borrows' => $booksWithBorrows,
+            'books_never_borrowed' => max(0, $totalBooks - $booksWithBorrows),
+            'total_borrows' => $totalBorrows,
+        ];
+    } catch (PDOException $e) {
+        return [
+            'total_books' => 0,
+            'books_with_borrows' => 0,
+            'books_never_borrowed' => 0,
+            'total_borrows' => 0,
+        ];
+    }
+}
+
+/**
  * Check if a book is available
  */
 function isBookAvailable($barcode) {
@@ -952,15 +1132,45 @@ function getPenaltySettings() {
 }
 
 /**
- * Late return penalty (legacy borrows with a fee use 3x that fee; otherwise flat late fee).
+ * Calendar days overdue (matches DATEDIFF(CURRENT_DATE, due_date) for DATETIME due dates).
  */
-function calculateLateReturnPenalty(array $transaction) {
-    $borrowFee = (float) ($transaction['payment_amount'] ?? 0);
-    if ($borrowFee > 0) {
-        return $borrowFee * 3;
+function getOverdueDays(array $transaction, $asOfTimestamp = null): int {
+    if ($asOfTimestamp === null && isset($transaction['days_overdue'])) {
+        return max(0, (int) $transaction['days_overdue']);
+    }
+    if (empty($transaction['due_date'])) {
+        return 0;
+    }
+    $dueTs = strtotime($transaction['due_date']);
+    if ($dueTs === false) {
+        return 0;
+    }
+    if ($asOfTimestamp === null) {
+        $asOfTs = strtotime('today');
+    } elseif (is_int($asOfTimestamp)) {
+        $asOfTs = $asOfTimestamp;
+    } else {
+        $asOfTs = strtotime((string) $asOfTimestamp);
+    }
+    if ($asOfTs === false) {
+        $asOfTs = strtotime('today');
+    }
+    $dueDay = strtotime(date('Y-m-d', $dueTs));
+    $asOfDay = strtotime(date('Y-m-d', $asOfTs));
+    return max(0, (int) round(($asOfDay - $dueDay) / 86400));
+}
+
+/**
+ * Late return penalty: ₱25 (late_return_fee) per calendar day after the due date.
+ */
+function calculateLateReturnPenalty(array $transaction, $asOfTimestamp = null): float {
+    $days = getOverdueDays($transaction, $asOfTimestamp);
+    if ($days <= 0) {
+        return 0.0;
     }
     $settings = getPenaltySettings();
-    return (float) ($settings['late_return_fee'] ?? 25.00);
+    $rate = (float) ($settings['late_return_fee'] ?? 25.00);
+    return $days * $rate;
 }
 
 /**
@@ -1287,12 +1497,10 @@ function returnBook($bookBarcode) {
             return false;
         }
         
-        // Check if the book is overdue and calculate penalty
-        $dueDate = strtotime($transaction['due_date']);
-        $today = strtotime('today');
-        $hasPenalty = ($today > $dueDate);
-        $penaltyAmount = $hasPenalty ? calculateLateReturnPenalty($transaction) : 0;
+        // Check if the book is overdue and calculate penalty (₱25 per calendar day)
         $returnDate = appNowString();
+        $penaltyAmount = calculateLateReturnPenalty($transaction, strtotime($returnDate));
+        $hasPenalty = $penaltyAmount > 0;
         
         // Get column names from transactions table to ensure we're using the right field name
         $stmt = $pdo->query("DESCRIBE transactions");
@@ -1587,12 +1795,10 @@ function returnBookByTransactionId($transactionId) {
             'status' => $transaction['book_status'],
         ];
 
-        // Check if the book is overdue and calculate penalty
-        $dueDate = strtotime($transaction['due_date']);
-        $today = strtotime('today');
-        $hasPenalty = ($today > $dueDate);
-        $penaltyAmount = $hasPenalty ? calculateLateReturnPenalty($transaction) : 0;
+        // Check if the book is overdue and calculate penalty (₱25 per calendar day)
         $returnDate = appNowString();
+        $penaltyAmount = calculateLateReturnPenalty($transaction, strtotime($returnDate));
+        $hasPenalty = $penaltyAmount > 0;
 
         // Get column names from transactions table to ensure we're using the right field name
         $stmt = $pdo->query("DESCRIBE transactions");

@@ -108,3 +108,35 @@
 2026-05-29 17:03:21 - Transaction committed successfully
 2026-05-29 17:03:21 - Attempting to send email to: sherwindave.osma@evsu.edu.ph
 2026-05-29 17:03:26 - Email sending result: SUCCESS
+2026-06-02 11:27:53 - Starting borrowBook: book=9780062888433, member=MEM0002, days=1
+2026-06-02 11:27:53 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=2
+2026-06-02 11:27:53 - Member found: ID=3, Name=Miguelito Bacho
+2026-06-02 11:27:53 - Table columns: hasQuantity=No, hasStock=Yes
+2026-06-02 11:27:53 - Attempting to insert transaction record
+2026-06-02 11:27:53 - Transaction inserted successfully, ID: 6
+2026-06-02 11:27:53 - Updating book stock to 1, status to Available
+2026-06-02 11:27:53 - Transaction committed successfully
+2026-06-02 11:27:53 - Attempting to send email to: miguelito.bacho@evsu.edu.ph
+2026-06-02 11:27:57 - Email sending result: SUCCESS
+2026-06-02 11:28:20 - Starting borrowBook: book=9780062888433, member=MEM0002, days=1
+2026-06-02 11:28:20 - Book found: ID=5, Title=Everything is Fucked, Status=Available, Quantity=1
+2026-06-02 11:28:20 - Member found: ID=3, Name=Miguelito Bacho
+2026-06-02 11:28:20 - Table columns: hasQuantity=No, hasStock=Yes
+2026-06-02 11:28:20 - Attempting to insert transaction record
+2026-06-02 11:28:20 - Transaction inserted successfully, ID: 7
+2026-06-02 11:28:20 - Updating book stock to 0, status to Borrowed
+2026-06-02 11:28:20 - Transaction committed successfully
+2026-06-02 11:28:20 - Attempting to send email to: miguelito.bacho@evsu.edu.ph
+2026-06-02 11:28:23 - Email sending result: SUCCESS
+2026-06-02 11:29:57 - Starting borrowBook: book=9781640634121, member=MEM0002, days=1
+2026-06-02 11:29:57 - Book found: ID=6, Title=Malice, Status=Needs Replacement, Quantity=9
+2026-06-02 11:29:57 - Member found: ID=3, Name=Miguelito Bacho
+2026-06-02 11:29:57 - Table columns: hasQuantity=No, hasStock=Yes
+2026-06-02 11:29:57 - Attempting to insert transaction record
+2026-06-02 11:29:57 - Transaction inserted successfully, ID: 8
+2026-06-02 11:29:57 - Updating book stock to 8, status to Available
+2026-06-02 11:29:57 - Transaction committed successfully
+2026-06-02 11:29:57 - Attempting to send email to: miguelito.bacho@evsu.edu.ph
+2026-06-02 11:30:02 - Email sending result: SUCCESS
+2026-06-02 11:30:14 - Starting borrowBook: book=9781640634121, member=MEM0002, days=1
+2026-06-02 11:30:14 - Member has reached borrowing limit (3 books): ID=3, Name=Miguelito Bacho

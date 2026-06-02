@@ -48,7 +48,7 @@ include 'includes/header.php';
                 <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-300 text-xl mr-3"></i>
                 <p class="text-yellow-800 dark:text-yellow-200">
                     <span class="font-bold"><?php echo count($overdueBooks); ?></span> books are currently overdue / need replacement.
-                    Late returns incur a flat penalty fee (see amount per book below).
+                    Late returns incur <strong>₱25 per calendar day</strong> after the due date (penalty increases each day).
                 </p>
             </div>
         </div>
@@ -103,7 +103,17 @@ include 'includes/header.php';
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3 font-medium text-red-600 dark:text-red-400">
-                                ₱<?php echo number_format(calculateLateReturnPenalty($overdue), 2); ?>
+                                <?php
+                                    $daysOverdue = max(0, (int) $overdue['days_overdue']);
+                                    $dailyRate = (float) (getPenaltySettings()['late_return_fee'] ?? 25.00);
+                                    $penaltyTotal = calculateLateReturnPenalty($overdue);
+                                ?>
+                                ₱<?php echo number_format($penaltyTotal, 2); ?>
+                                <?php if ($daysOverdue > 0): ?>
+                                    <div class="text-xs font-normal text-gray-500 dark:text-gray-400 mt-0.5">
+                                        <?php echo $daysOverdue; ?> day<?php echo $daysOverdue === 1 ? '' : 's'; ?> × ₱<?php echo number_format($dailyRate, 0); ?>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

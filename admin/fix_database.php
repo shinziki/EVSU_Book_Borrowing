@@ -173,5 +173,5 @@ echo "</div>";
 echo "</div>";
 
 // Return link
-echo "<p style='margin-top: 30px;'><a href='../index.php' style='color: #3498db;'>Return to Dashboard</a></p>";
+echo "<p style='margin-top: 30px;'><a href='../dashboard.php' style='color: #3498db;'>Return to Dashboard</a></p>";
 ?> 

@@ -153,7 +153,8 @@ if ($action === 'print_barcode' && $memberId) {
 // Handle member form submission (add/edit)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fullname = $_POST['fullname'] ?? '';
-    $email = $_POST['email'] ?? '';
+    $emailUsername = trim($_POST['email_username'] ?? '');
+    $email = buildEvsuEmail($emailUsername);
     $phone = $_POST['phone'] ?? '';
     $address = $_POST['address'] ?? '';
     $barcode = $_POST['barcode'] ?? '';
@@ -175,6 +176,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate required fields
     if (empty($fullname)) {
         setFlashMessage('Member name is required', 'error');
+    } elseif (($emailError = getMemberEmailValidationError($emailUsername)) !== null) {
+        setFlashMessage($emailError, 'error');
     } elseif (empty($course) || !array_key_exists($course, $courseOptions)) {
         setFlashMessage('Please select a valid course', 'error');
     } else {
@@ -402,10 +405,16 @@ include 'includes/header.php';
                 </div>
                 
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address *</label>
-                    <input type="email" id="email" name="email" required 
-                           value="<?php echo ($memberData) ? htmlspecialchars($memberData['email']) : ''; ?>"
-                           class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                    <label for="email_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EVSU Email *</label>
+                    <div class="flex rounded-lg border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 overflow-hidden">
+                        <input type="text" id="email_username" name="email_username" required
+                               autocomplete="off"
+                               placeholder="username"
+                               value="<?php echo ($memberData) ? htmlspecialchars(extractEvsuEmailUsername($memberData['email'] ?? '')) : ''; ?>"
+                               class="flex-1 min-w-0 px-4 py-2 border-0 focus:ring-0 dark:bg-gray-700 dark:text-white">
+                        <span class="inline-flex items-center px-3 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-sm whitespace-nowrap">@<?php echo htmlspecialchars(getEvsuEmailDomain()); ?></span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter username only. Saved as username@<?php echo htmlspecialchars(getEvsuEmailDomain()); ?>.</p>
                 </div>
                 
                 <div>
@@ -490,6 +499,19 @@ include 'includes/header.php';
             </div>
         </form>
     </div>
+    <script>
+        (function() {
+            const input = document.getElementById('email_username');
+            if (!input) return;
+            input.addEventListener('input', function() {
+                let value = this.value.toLowerCase();
+                if (value.includes('@')) {
+                    value = value.split('@')[0];
+                }
+                this.value = value.replace(/[^a-z0-9._-]/g, '');
+            });
+        })();
+    </script>
 <?php else: ?>
     <!-- Members List -->
     <div class="mb-6 flex justify-between items-center">

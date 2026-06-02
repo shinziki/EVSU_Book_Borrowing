@@ -260,7 +260,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($memberType === 'new') {
             ensureMemberStudentIdColumn();
             $fullname = trim($_POST['fullname'] ?? '');
-            $email = trim($_POST['email'] ?? '');
+            $emailUsername = trim($_POST['email_username'] ?? '');
+            $email = buildEvsuEmail($emailUsername);
             $phone = trim($_POST['phone'] ?? '');
             $course = trim($_POST['course'] ?? '');
             $address = trim($_POST['address'] ?? '');
@@ -270,6 +271,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (empty($fullname)) {
                 setFlashMessage('Member name is required', 'error');
+                header('Location: borrow.php');
+                exit;
+            }
+            if (($emailError = getMemberEmailValidationError($emailUsername)) !== null) {
+                setFlashMessage($emailError, 'error');
                 header('Location: borrow.php');
                 exit;
             }
@@ -647,9 +653,15 @@ include 'includes/header.php';
                     </div>
                     
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address *</label>
-                        <input type="email" id="email" name="email" placeholder="Enter student's email address"
-                               class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                        <label for="email_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EVSU Email *</label>
+                        <div class="flex rounded-lg border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 overflow-hidden">
+                            <input type="text" id="email_username" name="email_username"
+                                   autocomplete="off"
+                                   placeholder="username"
+                                   class="flex-1 min-w-0 px-4 py-2 border-0 focus:ring-0 dark:bg-gray-700 dark:text-white">
+                            <span class="inline-flex items-center px-3 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-sm whitespace-nowrap">@<?php echo htmlspecialchars(getEvsuEmailDomain()); ?></span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Username only — saved as @<?php echo htmlspecialchars(getEvsuEmailDomain()); ?></p>
                     </div>
                     
                     <div>
@@ -835,7 +847,7 @@ function switchMemberType(type) {
     
     const memberBarcode = document.getElementById('member_barcode');
     const fullname = document.getElementById('fullname');
-    const email = document.getElementById('email');
+    const emailUsername = document.getElementById('email_username');
     const course = document.getElementById('course');
     
     if (type === 'existing') {
@@ -850,7 +862,7 @@ function switchMemberType(type) {
         // Input requirements
         memberBarcode.required = true;
         fullname.required = false;
-        email.required = false;
+        if (emailUsername) emailUsername.required = false;
         course.required = false;
         
         // Focus first input
@@ -867,7 +879,7 @@ function switchMemberType(type) {
         // Input requirements
         memberBarcode.required = false;
         fullname.required = true;
-        email.required = true;
+        if (emailUsername) emailUsername.required = true;
         course.required = true;
         
         // Focus first input
@@ -880,6 +892,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const memberBarcode = document.getElementById('member_barcode');
     if (memberBarcode) {
         memberBarcode.required = true;
+    }
+
+    const emailUsername = document.getElementById('email_username');
+    if (emailUsername) {
+        emailUsername.addEventListener('input', function() {
+            let value = this.value.toLowerCase();
+            if (value.includes('@')) {
+                value = value.split('@')[0];
+            }
+            this.value = value.replace(/[^a-z0-9._-]/g, '');
+        });
     }
 });
 </script>

@@ -353,9 +353,17 @@ if (isset($_SESSION['admin_id'])) {
                         <ul class="space-y-1">
                         <?php if ($navIsAdmin || staffHasPermission('dashboard.view')): ?>
                         <li>
-                            <a href="index.php" class="<?php echo $navLinkClass('index.php'); ?>">
+                            <a href="dashboard.php" class="<?php echo $navLinkClass('dashboard.php'); ?>">
                                 <i class="fas fa-chart-bar w-5 mr-3 text-center"></i>
                                 <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <?php endif; ?>
+                        <?php if ($navIsAdmin || staffHasPermission('metrics.view') || staffHasPermission('dashboard.view')): ?>
+                        <li>
+                            <a href="book_metrics.php" class="<?php echo $navLinkClass('book_metrics.php'); ?>">
+                                <i class="fas fa-chart-line w-5 mr-3 text-center"></i>
+                                <span>Book Metrics</span>
                             </a>
                         </li>
                         <?php endif; ?>
