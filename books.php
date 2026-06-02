@@ -7,6 +7,20 @@ requireLogin();
 
 $canManageBooks = isAdmin() || staffHasPermission('books.manage');
 
+// Load reusable category options for add/edit forms
+$bookCategories = [];
+try {
+    $stmt = $pdo->query("
+        SELECT DISTINCT category
+        FROM books
+        WHERE category IS NOT NULL AND TRIM(category) <> ''
+        ORDER BY category ASC
+    ");
+    $bookCategories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (PDOException $e) {
+    $bookCategories = [];
+}
+
 // Process form submissions
 $action = $_GET['action'] ?? '';
 $bookId = $_GET['id'] ?? 0;
@@ -139,7 +153,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $_POST['title'] ?? '';
     $author = $_POST['author'] ?? '';
     $isbn = $_POST['isbn'] ?? '';
-    $category = $_POST['category'] ?? '';
+    $category = trim($_POST['category'] ?? '');
+    $categorySelect = trim($_POST['category_select'] ?? '');
+    $newCategory = trim($_POST['new_category'] ?? '');
+    if ($newCategory !== '') {
+        $category = $newCategory;
+    } elseif ($categorySelect !== '') {
+        $category = $categorySelect;
+    }
     $description = $_POST['description'] ?? '';
     $barcode = $_POST['barcode'] ?? '';
     $stock = intval($_POST['stock'] ?? 1);
@@ -380,9 +401,37 @@ include 'includes/header.php';
                 
                 <div>
                     <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                    <input type="text" id="category" name="category" 
-                           value="<?php echo ($bookData) ? htmlspecialchars($bookData['category']) : ''; ?>"
-                           class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                    <?php
+                        $selectedCategory = ($bookData && !empty($bookData['category'])) ? trim($bookData['category']) : '';
+                        $availableCategoryOptions = $bookCategories;
+                        if ($selectedCategory !== '' && !in_array($selectedCategory, $availableCategoryOptions, true)) {
+                            $availableCategoryOptions[] = $selectedCategory;
+                            sort($availableCategoryOptions, SORT_NATURAL | SORT_FLAG_CASE);
+                        }
+                    ?>
+                    <input type="hidden" id="category" name="category" value="<?php echo htmlspecialchars($selectedCategory); ?>">
+                    <div class="flex items-center gap-2">
+                        <select id="category_select" name="category_select"
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                            <option value="">Select category</option>
+                            <?php foreach ($availableCategoryOptions as $categoryOption): ?>
+                                <option value="<?php echo htmlspecialchars($categoryOption); ?>" <?php echo ($selectedCategory === $categoryOption) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($categoryOption); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="button" id="toggle-category-editor"
+                                class="shrink-0 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            Edit Categories
+                        </button>
+                    </div>
+                    <div id="category-editor" class="mt-2 hidden">
+                        <label for="new_category" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Add New Category</label>
+                        <input type="text" id="new_category" name="new_category"
+                               placeholder="Enter new category"
+                               class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                        <p class="text-xs text-gray-500 mt-1">If filled, this new category will be used and saved.</p>
+                    </div>
                 </div>
                 
                 <div>
@@ -430,6 +479,29 @@ include 'includes/header.php';
             </div>
         </form>
     </div>
+    <script>
+        const categoryToggleBtn = document.getElementById('toggle-category-editor');
+        const categoryEditor = document.getElementById('category-editor');
+        const categorySelect = document.getElementById('category_select');
+        const newCategoryInput = document.getElementById('new_category');
+
+        if (categoryToggleBtn && categoryEditor) {
+            categoryToggleBtn.addEventListener('click', function () {
+                categoryEditor.classList.toggle('hidden');
+                if (!categoryEditor.classList.contains('hidden') && newCategoryInput) {
+                    newCategoryInput.focus();
+                }
+            });
+        }
+
+        if (newCategoryInput && categorySelect) {
+            newCategoryInput.addEventListener('input', function () {
+                if (this.value.trim() !== '') {
+                    categorySelect.value = '';
+                }
+            });
+        }
+    </script>
 <?php else: ?>
     <!-- Books List -->
     <div class="mb-6 flex justify-between items-center">
@@ -643,6 +715,7 @@ include 'includes/header.php';
         document.getElementById('cancelDelete').addEventListener('click', function() {
             document.getElementById('deleteModal').classList.add('hidden');
         });
+
     </script>
 <?php endif; ?>
 

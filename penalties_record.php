@@ -83,10 +83,7 @@ include 'includes/header.php';
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <?php if (!$isPaid): ?>
-                                    <a href="mark_penalty_paid.php?id=<?php echo $penalty['id']; ?>" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">Mark as Paid</a>
-                                <?php endif; ?>
-                                <a href="penalties.php?transaction_id=<?php echo $penalty['id']; ?>" class="ml-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">View Details</a>
+                                <a href="penalties.php?transaction_id=<?php echo $penalty['id']; ?>" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">View Details</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -232,7 +232,7 @@ if (isset($_SESSION['admin_id'])) {
                     <!-- Notification Icon with Dropdown -->
                     <div class="relative">
                         <button id="notification-menu-button" class="p-2 rounded-full text-white hover:bg-[#8f1212] relative">
-                        <i class="fas fa-bell"></i>
+                            <i class="fas fa-bell"></i>
                             <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center <?php echo $notificationCount > 0 ? '' : 'hidden'; ?>"><?php echo $notificationCount > 9 ? '9+' : $notificationCount; ?></span>
                         </button>
                         <!-- Notification Dropdown Menu (hidden by default) -->
@@ -420,14 +420,6 @@ if (isset($_SESSION['admin_id'])) {
                             <a href="overdue.php" class="<?php echo $navLinkClass('overdue.php'); ?>">
                                 <i class="fas fa-exclamation-circle w-5 mr-3 text-center"></i>
                                 <span>Overdue Books</span>
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                        <?php if ($navIsAdmin || staffHasPermission('notifications.view')): ?>
-                        <li>
-                            <a href="notifications.php" class="<?php echo $navLinkClass('notifications.php'); ?>">
-                                <i class="fas fa-bell w-5 mr-3 text-center"></i>
-                                <span>Notifications</span>
                             </a>
                         </li>
                         <?php endif; ?>

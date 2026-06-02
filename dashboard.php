@@ -135,7 +135,7 @@ include 'includes/header.php';
             </a>
             <a href="reports.php" class="w-full flex flex-col sm:flex-row items-center justify-center sm:justify-start p-3 sm:p-4 rounded-lg bg-red-50 dark:bg-gray-700 text-[#a91515] dark:text-red-300 hover:bg-red-100 dark:hover:bg-gray-600 transition">
                 <i class="fas fa-file-pdf mb-1 sm:mb-0 sm:mr-3 text-lg"></i>
-                <span class="text-sm sm:text-base">Annual Report (PDF)</span>
+                <span class="text-sm sm:text-base">Generate Report</span>
             </a>
             <?php endif; ?>
 
