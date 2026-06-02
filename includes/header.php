@@ -439,14 +439,6 @@ if (isset($_SESSION['admin_id'])) {
                             </a>
                         </li>
                         <?php endif; ?>
-                        <?php if ($navIsAdmin || staffHasPermission('settings.profile')): ?>
-                        <li>
-                            <a href="settings.php" class="<?php echo $navLinkClass('settings.php'); ?>">
-                                <i class="fas fa-cog w-5 mr-3 text-center"></i>
-                                <span>Settings</span>
-                            </a>
-                        </li>
-                        <?php endif; ?>
                         </ul>
                     </nav>
                 </div>

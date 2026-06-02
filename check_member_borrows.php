@@ -16,12 +16,19 @@ $response = [
     'borrowed_books' => []
 ];
 
-// Check if member barcode is provided
-if (isset($_GET['barcode']) && !empty($_GET['barcode'])) {
-    $memberBarcode = $_GET['barcode'];
+// Check if Student ID (or legacy barcode) is provided
+$memberIdentifier = null;
+if (isset($_GET['student_id']) && trim($_GET['student_id']) !== '') {
+    $memberIdentifier = trim($_GET['student_id']);
+} elseif (isset($_GET['barcode']) && trim($_GET['barcode']) !== '') {
+    // backward compatibility (older UI)
+    $memberIdentifier = trim($_GET['barcode']);
+}
+
+if ($memberIdentifier !== null) {
     
     // Get member details
-    $memberInfo = getMemberByBarcode($memberBarcode);
+    $memberInfo = getMemberByBarcode($memberIdentifier);
     
     if ($memberInfo) {
         // Get borrow limit based on membership type
@@ -63,10 +70,10 @@ if (isset($_GET['barcode']) && !empty($_GET['barcode'])) {
         
         $response['message'] = "Member has ${activeBorrows} active borrows";
     } else {
-        $response['message'] = "Member not found with barcode: $memberBarcode";
+        $response['message'] = "Member not found with Student ID: $memberIdentifier";
     }
 } else {
-    $response['message'] = "No member barcode provided";
+    $response['message'] = "No Student ID provided";
 }
 
 // Return JSON response

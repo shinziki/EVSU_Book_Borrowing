@@ -242,14 +242,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Save book info to session
             $_SESSION['borrow_book_info'] = $bookInfo;
             $_SESSION['borrow_book_barcode'] = $bookBarcode;
-            setFlashMessage('Book found: "' . htmlspecialchars($bookInfo['title']) . '". Now scan member barcode.', 'success');
+            setFlashMessage('Book found: "' . htmlspecialchars($bookInfo['title']) . '". Now scan Student ID.', 'success');
             header('Location: borrow.php');
             exit;
         }
     }
     
-    // Member barcode scan / inline newbie registration and complete borrowing
-    if (((isset($_POST['member_barcode']) && !empty($_POST['member_barcode'])) || (isset($_POST['member_type']) && $_POST['member_type'] === 'new')) && 
+    // Member Student ID scan / inline newbie registration and complete borrowing
+    if (((isset($_POST['member_student_id']) && !empty($_POST['member_student_id'])) || (isset($_POST['member_type']) && $_POST['member_type'] === 'new')) && 
         isset($_SESSION['borrow_book_info'])) {
         
         $memberType = $_POST['member_type'] ?? 'existing';
@@ -334,12 +334,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
         } else {
-            $memberBarcode = $_POST['member_barcode'] ?? '';
+            $memberBarcode = $_POST['member_student_id'] ?? '';
             // Check if member exists
             $memberInfo = getMemberByBarcode($memberBarcode);
             
             if (!$memberInfo) {
-                setFlashMessage('Member not found with barcode: ' . htmlspecialchars($memberBarcode), 'error');
+                setFlashMessage('Member not found with Student ID: ' . htmlspecialchars($memberBarcode), 'error');
                 header('Location: borrow.php');
                 exit;
             } elseif (!isMemberActive($memberInfo)) {
@@ -625,8 +625,8 @@ include 'includes/header.php';
             <!-- Existing Member Fields Container -->
             <div id="existing_member_fields" class="space-y-6">
                 <div>
-                    <label for="member_barcode" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Member Barcode</label>
-                    <input type="text" id="member_barcode" name="member_barcode" placeholder="Scan member barcode" 
+                    <label for="member_student_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Student ID</label>
+                    <input type="text" id="member_student_id" name="member_student_id" placeholder="Enter Student ID" 
                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
                            autofocus onchange="checkMemberBorrows(this.value)">
                     <div id="member-borrows-info" class="mt-2"></div>
@@ -707,29 +707,12 @@ include 'includes/header.php';
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Borrowing Information</h3>
         
         <div class="space-y-4">
-            <div class="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+            <!-- <div class="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
                 <div class="flex items-center">
-                    <i class="fas fa-info-circle text-blue-600 dark:text-blue-300 text-xl mr-3"></i>
-                    <p class="text-blue-800 dark:text-blue-200">First scan book barcode (or ISBN), then scan member barcode to borrow</p>
+                    <i class="fas fa-info-circle text-blue-600 dark:text-blue-300 text-xl mr-3"></i>/
+                    <p class="text-blue-800 dark:text-blue-200">First scan book barcode (or ISBN), then scan Student ID to borrow</p>
                 </div>
-            </div>
-            
-            <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Demo Barcodes</h4>
-                <p class="text-gray-600 dark:text-gray-400 mb-4">Use these for testing:</p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="text-center">
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Book: LIB1001</p>
-                        <svg class="barcode-canvas mx-auto" jsbarcode-format="CODE128" jsbarcode-value="LIB1001" jsbarcode-textmargin="0" jsbarcode-fontoptions="bold"></svg>
-                    </div>
-                    
-                    <div class="text-center">
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Member: MEM2001</p>
-                        <svg class="barcode-canvas mx-auto" jsbarcode-format="CODE128" jsbarcode-value="MEM2001" jsbarcode-textmargin="0" jsbarcode-fontoptions="bold"></svg>
-                    </div>
-                </div>
-            </div>
+            </div> -->
             
             <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Recent Borrowings</h4>
@@ -772,9 +755,9 @@ include 'includes/header.php';
 </div>
 
 <script>
-function checkMemberBorrows(barcode) {
-    // Don't proceed if barcode is empty
-    if (!barcode) {
+function checkMemberBorrows(studentId) {
+    // Don't proceed if studentId is empty
+    if (!studentId) {
         document.getElementById('member-borrows-info').innerHTML = '';
         return;
     }
@@ -783,7 +766,7 @@ function checkMemberBorrows(barcode) {
     document.getElementById('member-borrows-info').innerHTML = '<p class="text-sm italic text-gray-500">Loading member information...</p>';
     
     // Perform AJAX request
-    fetch('check_member_borrows.php?barcode=' + encodeURIComponent(barcode))
+    fetch('check_member_borrows.php?student_id=' + encodeURIComponent(studentId))
         .then(response => response.json())
         .then(data => {
             const infoDiv = document.getElementById('member-borrows-info');
@@ -845,7 +828,7 @@ function switchMemberType(type) {
     const existingFields = document.getElementById('existing_member_fields');
     const newFields = document.getElementById('new_member_fields');
     
-    const memberBarcode = document.getElementById('member_barcode');
+    const memberBarcode = document.getElementById('member_student_id');
     const fullname = document.getElementById('fullname');
     const emailUsername = document.getElementById('email_username');
     const course = document.getElementById('course');
@@ -889,7 +872,7 @@ function switchMemberType(type) {
 
 // On page load, initialize requirements based on default selected tab (existing)
 document.addEventListener('DOMContentLoaded', function() {
-    const memberBarcode = document.getElementById('member_barcode');
+    const memberBarcode = document.getElementById('member_student_id');
     if (memberBarcode) {
         memberBarcode.required = true;
     }

@@ -336,8 +336,10 @@ include 'includes/header.php';
                 <i class="fas fa-exclamation-triangle text-amber-600 dark:text-amber-300 text-xl mr-3"></i>
                 <p class="text-amber-800 dark:text-amber-200">
                     Record penalties for damaged or lost books. Scan the book barcode or transaction barcode.
-                    <br>Damaged book fee: ₱<?php echo number_format($penaltySettings['damaged_book_fee'], 2); ?>
-                    <br>Lost book fee: ₱<?php echo number_format($penaltySettings['lost_book_fee'], 2); ?>
+                    <br>
+                    Lost or damaged books is equivalent as Needs Replacement.
+                    <br>
+                    Late returnee is equivalent to ₱25 per day.
                 </p>
             </div>
         </div>
@@ -355,8 +357,8 @@ include 'includes/header.php';
                 <label for="penalty_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Penalty Type</label>
                 <select id="penalty_type" name="penalty_type" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
                     <option value="">-- Select Penalty Type --</option>
-                    <option value="damaged">Book Damaged (₱<?php echo number_format($penaltySettings['damaged_book_fee'], 2); ?>)</option>
-                    <option value="lost">Book Lost (₱<?php echo number_format($penaltySettings['lost_book_fee'], 2); ?>)</option>
+                    <option value="damaged">Book Damaged</option>
+                    <option value="lost">Book Lost</option>
                 </select>
             </div>
             
