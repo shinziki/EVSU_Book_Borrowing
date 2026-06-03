@@ -1,0 +1,14 @@
+{
+    "generated_at": "2026-06-03T07:41:23+08:00",
+    "application": "EVSU Book Borrowing System",
+    "database_name": "coffee_prince_library",
+    "php_version": "8.2.12",
+    "mysql_version": "10.4.32-MariaDB",
+    "backup_root": "C:\\xampp\\htdocs\\EVSU_Book_Borrowing\\backups",
+    "config_files": [
+        "db_connect.php",
+        "mail_config.php",
+        "backup_config.sample.php"
+    ],
+    "note": "Passwords in config snapshots are redacted. Re-enter secrets on a new server."
+}

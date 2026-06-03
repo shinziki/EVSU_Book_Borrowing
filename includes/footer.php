@@ -103,6 +103,31 @@
         if (document.querySelector('input[name="book_barcode"]')) {
             document.querySelector('input[name="book_barcode"]').focus();
         }
+
+        <?php if (function_exists('isLoggedIn') && isLoggedIn() && function_exists('isStaff') && isStaff()): ?>
+        // Staff: auto logout after 1 hour without user interaction
+        (function () {
+            const idleMs = <?php echo (int) STAFF_SESSION_IDLE_SECONDS; ?> * 1000;
+            let idleTimer = null;
+
+            function logoutForIdle() {
+                window.location.href = 'logout.php?timeout=1';
+            }
+
+            function resetIdleTimer() {
+                if (idleTimer) {
+                    clearTimeout(idleTimer);
+                }
+                idleTimer = setTimeout(logoutForIdle, idleMs);
+            }
+
+            ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'].forEach(function (evt) {
+                document.addEventListener(evt, resetIdleTimer, { passive: true });
+            });
+
+            resetIdleTimer();
+        })();
+        <?php endif; ?>
     </script>
 </body>
 </html> 

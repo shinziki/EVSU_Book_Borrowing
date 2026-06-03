@@ -1,0 +1,5 @@
+[2026-06-03 07:35:37] source=cron success=yes method=pdo file=backup_2026-06-03.sql Backup saved as backup_2026-06-03.sql (15.4 KB).
+[2026-06-03 07:36:51] source=manual success=yes method=pdo file=backup_2026-06-03.sql Backup saved as backup_2026-06-03.sql (15.4 KB).
+[2026-06-03 07:37:20] source=manual success=yes method=pdo file=backup_2026-06-03.sql Backup saved as backup_2026-06-03.sql (15.4 KB).
+[2026-06-03 07:40:48] source=cron success=yes method=pdo file=backup_2026-06-03.sql deployment=yes Backup saved as backup_2026-06-03.sql (15.4 KB). Deployment package (schema + config + docs) updated.
+[2026-06-03 07:41:23] source=manual success=yes method=pdo file=backup_2026-06-03.sql deployment=yes Backup saved as backup_2026-06-03.sql (15.4 KB). Deployment package (schema + config + docs) updated.

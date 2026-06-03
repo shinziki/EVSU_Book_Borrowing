@@ -1,6 +1,7 @@
 <?php
 require_once 'config/db_connect.php';
 require_once 'config/functions.php';
+require_once 'config/backup_helpers.php';
 
 // Require login to access this page
 requireLogin();
@@ -180,9 +181,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($checkStmt->fetch()) {
                         $error = 'Username or email is already in use.';
                     } else {
+                        ensureAdminStatusColumn();
                         $insertStmt = $pdo->prepare("
-                            INSERT INTO admins (username, password, fullname, email, role)
-                            VALUES (:username, :password, :fullname, :email, 'staff')
+                            INSERT INTO admins (username, password, fullname, email, role, status)
+                            VALUES (:username, :password, :fullname, :email, 'staff', 'active')
                         ");
                         $insertStmt->execute([
                             ':username' => $staffUsername,
@@ -239,6 +241,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } catch (PDOException $e) {
                 $error = 'Error saving permissions: ' . $e->getMessage();
+            }
+        }
+    }
+
+    // Handle staff account activate / deactivate (admin only)
+    if (isset($_POST['toggle_staff_status'])) {
+        if (!isAdmin()) {
+            $error = 'You do not have permission to update staff accounts.';
+        } else {
+            $staffId = (int) ($_POST['staff_id'] ?? 0);
+            $newStatus = normalizeAdminAccountStatus($_POST['new_status'] ?? 'active');
+            if ($staffId === (int) $_SESSION['admin_id']) {
+                $error = 'You cannot deactivate your own account.';
+            } elseif ($staffId > 0) {
+                try {
+                    ensureAdminStatusColumn();
+                    $checkStmt = $pdo->prepare("SELECT id, fullname, role, status FROM admins WHERE id = ? LIMIT 1");
+                    $checkStmt->execute([$staffId]);
+                    $staffUser = $checkStmt->fetch();
+                    if (!$staffUser || $staffUser['role'] !== 'staff') {
+                        $error = 'Only staff accounts can be updated here.';
+                    } else {
+                        $updateStmt = $pdo->prepare("UPDATE admins SET status = ? WHERE id = ? AND role = 'staff'");
+                        $updateStmt->execute([$newStatus, $staffId]);
+                        $actionLabel = $newStatus === 'active' ? 'reactivated' : 'deactivated';
+                        try {
+                            $logStmt = $pdo->prepare("INSERT INTO activity_log (user_id, action, description) VALUES (?, 'Staff Account', ?)");
+                            $logStmt->execute([
+                                $_SESSION['admin_id'],
+                                ucfirst($actionLabel) . ' staff account: ' . $staffUser['fullname'],
+                            ]);
+                        } catch (Exception $e) {
+                            // ignore logging errors
+                        }
+                        $success = 'Staff account ' . htmlspecialchars($staffUser['fullname']) . ' has been ' . $actionLabel . '.';
+                        header('Location: settings.php?tab=staff&staff_id=' . $staffId);
+                        exit;
+                    }
+                } catch (PDOException $e) {
+                    $error = 'Error updating staff account status: ' . $e->getMessage();
+                }
             }
         }
     }
@@ -328,6 +371,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         }
     }
+
+    // Manual database backup (admin only)
+    if (isset($_POST['run_database_backup'])) {
+        if (!isAdmin()) {
+            $error = 'You do not have permission to run database backups.';
+        } else {
+            $result = createDatabaseBackup($pdo);
+            logDatabaseBackupRun($result, 'manual');
+            if ($result['success']) {
+                try {
+                    $logStmt = $pdo->prepare("INSERT INTO activity_log (user_id, action, description) VALUES (?, 'Database Backup', ?)");
+                    $logStmt->execute([$_SESSION['admin_id'], 'Created backup: ' . $result['filename']]);
+                } catch (Exception $e) {
+                    // ignore logging errors
+                }
+                $success = $result['message'];
+            } else {
+                $error = $result['message'];
+            }
+        }
+    }
 }
 
 // Staff accounts list (admin only)
@@ -339,7 +403,8 @@ $permissionDefinitions = getStaffPermissionDefinitions();
 
 if (isAdmin()) {
     ensureStaffPermissionsTable();
-    $staffStmt = $pdo->query("SELECT id, username, fullname, email, role FROM admins WHERE role = 'staff' ORDER BY fullname");
+    ensureAdminStatusColumn();
+    $staffStmt = $pdo->query("SELECT id, username, fullname, email, role, status FROM admins WHERE role = 'staff' ORDER BY fullname");
     $staffAccounts = $staffStmt->fetchAll();
 
     $editingStaffId = (int) ($_GET['staff_id'] ?? 0);
@@ -360,6 +425,8 @@ if (file_exists('config/mail_config.php')) {
     include_once 'config/mail_config.php';
 }
 
+$databaseBackups = isAdmin() ? listDatabaseBackups() : [];
+
 // Settings tabs
 $settingsTabs = isAdmin()
     ? [
@@ -367,6 +434,7 @@ $settingsTabs = isAdmin()
         'staff' => ['label' => 'Staff Accounts', 'icon' => 'user-shield'],
         'permissions' => ['label' => 'Role Permissions', 'icon' => 'key'],
         'email' => ['label' => 'Email Settings', 'icon' => 'envelope'],
+        'backup' => ['label' => 'Database Backup', 'icon' => 'database'],
     ]
     : [
         'account' => ['label' => 'My Account', 'icon' => 'user'],
@@ -564,16 +632,26 @@ include 'includes/header.php';
                         <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Name</th>
                         <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Username</th>
                         <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Email</th>
+                        <th class="px-4 py-2 text-center text-gray-600 dark:text-gray-300">Status</th>
                         <th class="px-4 py-2 text-center text-gray-600 dark:text-gray-300">Permissions</th>
-                        <th class="px-4 py-2 text-right text-gray-600 dark:text-gray-300">Action</th>
+                        <th class="px-4 py-2 text-right text-gray-600 dark:text-gray-300">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                    <?php foreach ($staffAccounts as $staff): ?>
+                    <?php foreach ($staffAccounts as $staff):
+                        $staffActive = isAdminAccountActive($staff);
+                    ?>
                     <tr>
                         <td class="px-4 py-3 text-gray-800 dark:text-white"><?php echo htmlspecialchars($staff['fullname']); ?></td>
                         <td class="px-4 py-3 text-gray-600 dark:text-gray-400"><?php echo htmlspecialchars($staff['username']); ?></td>
                         <td class="px-4 py-3 text-gray-600 dark:text-gray-400"><?php echo htmlspecialchars($staff['email']); ?></td>
+                        <td class="px-4 py-3 text-center">
+                            <?php if ($staffActive): ?>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</span>
+                            <?php else: ?>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Inactive</span>
+                            <?php endif; ?>
+                        </td>
                         <td class="px-4 py-3 text-center">
                             <a href="settings.php?tab=staff&staff_id=<?php echo (int) $staff['id']; ?>"
                                class="inline-flex items-center px-3 py-1 text-sm rounded-lg <?php echo $editingStaffId === (int) $staff['id']
@@ -582,8 +660,18 @@ include 'includes/header.php';
                                 <i class="fas fa-key mr-1"></i> Configure
                             </a>
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            <form method="POST" action="settings.php?tab=staff" class="inline" onsubmit="return confirm('Remove this staff account?');">
+                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <form method="POST" action="settings.php?tab=staff" class="inline">
+                                <input type="hidden" name="staff_id" value="<?php echo (int) $staff['id']; ?>">
+                                <input type="hidden" name="new_status" value="<?php echo $staffActive ? 'inactive' : 'active'; ?>">
+                                <button type="submit" name="toggle_staff_status"
+                                        class="<?php echo $staffActive ? 'text-amber-600 hover:text-amber-800 dark:text-amber-400' : 'text-green-600 hover:text-green-800 dark:text-green-400'; ?> text-sm mr-3"
+                                        onclick="return confirm('<?php echo $staffActive ? 'Deactivate' : 'Reactivate'; ?> this staff account?');">
+                                    <i class="fas fa-<?php echo $staffActive ? 'ban' : 'check-circle'; ?> mr-1"></i>
+                                    <?php echo $staffActive ? 'Deactivate' : 'Reactivate'; ?>
+                                </button>
+                            </form>
+                            <form method="POST" action="settings.php?tab=staff" class="inline" onsubmit="return confirm('Permanently remove this staff account?');">
                                 <input type="hidden" name="staff_id" value="<?php echo (int) $staff['id']; ?>">
                                 <button type="submit" name="delete_staff" class="text-red-600 hover:text-red-800 dark:text-red-400 text-sm">
                                     <i class="fas fa-trash mr-1"></i> Remove
@@ -836,6 +924,85 @@ include 'includes/header.php';
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Tab: Database Backup -->
+<div id="tab-backup" class="<?php echo $activeTab !== 'backup' ? 'hidden' : ''; ?>">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Database Backup</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Full database backups are saved as <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">backup_YYYY-MM-DD.sql</code>
+            in <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">backups/database/</code>.
+            Running a backup again on the same day replaces that day&apos;s file.
+        </p>
+
+        <form method="POST" action="settings.php?tab=backup" class="mb-6">
+            <button type="submit" name="run_database_backup"
+                    class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition duration-300"
+                    onclick="return confirm('Create a full database backup now?');">
+                <i class="fas fa-download mr-2"></i> Create Backup Now
+            </button>
+            <span class="ml-3 text-sm text-gray-500 dark:text-gray-400">Same as a phpMyAdmin export — manual on demand.</span>
+        </form>
+
+        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/40">
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-white mb-2">
+                <i class="fas fa-clock mr-1"></i> Daily scheduled backup (cron / Task Scheduler)
+            </h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Schedule this command to run once per day (e.g. 2:00 AM). It writes today&apos;s
+                <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">backup_<?php echo date('Y-m-d'); ?>.sql</code> automatically.
+            </p>
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Windows (XAMPP)</p>
+            <pre class="text-xs bg-gray-800 text-gray-100 p-3 rounded-lg overflow-x-auto mb-3">C:\xampp\php\php.exe <?php echo str_replace('\\', '\\\\', realpath(__DIR__)); ?>\scripts\daily_database_backup.php</pre>
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Linux / macOS (cron)</p>
+            <pre class="text-xs bg-gray-800 text-gray-100 p-3 rounded-lg overflow-x-auto">0 2 * * * /usr/bin/php <?php echo realpath(__DIR__); ?>/scripts/daily_database_backup.php</pre>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                Log file: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">logs/database_backup.log</code>
+            </p>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Available Backups</h3>
+        <?php if (empty($databaseBackups)): ?>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">No backup files yet. Create one manually or run the scheduled script.</p>
+        <?php else: ?>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">File</th>
+                            <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Date</th>
+                            <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Size</th>
+                            <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Created</th>
+                            <th class="px-4 py-2 text-right text-gray-600 dark:text-gray-300">Download</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <?php foreach ($databaseBackups as $backup): ?>
+                        <tr class="bg-white dark:bg-gray-800">
+                            <td class="px-4 py-3 font-mono text-gray-800 dark:text-white"><?php echo htmlspecialchars($backup['filename']); ?></td>
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-400"><?php echo htmlspecialchars($backup['date']); ?></td>
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-400"><?php echo formatBackupFileSize($backup['size']); ?></td>
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-400"><?php echo date('M j, Y g:i A', $backup['modified']); ?></td>
+                            <td class="px-4 py-3 text-right">
+                                <a href="download_backup.php?file=<?php echo urlencode($backup['filename']); ?>"
+                                   class="text-primary-600 hover:text-primary-800 dark:text-primary-400 text-sm">
+                                    <i class="fas fa-file-download mr-1"></i> Download
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-4">
+                Most recent backup: <strong><?php echo htmlspecialchars($databaseBackups[0]['filename']); ?></strong>
+                (<?php echo formatBackupFileSize($databaseBackups[0]['size']); ?>).
+            </p>
+        <?php endif; ?>
     </div>
 </div>
 <?php endif; ?>

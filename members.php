@@ -7,10 +7,12 @@ requireLogin();
 ensureMemberCourseColumn();
 ensureMemberStatusColumn();
 ensureMemberStudentIdColumn();
+ensureMemberYearLevelColumn();
 ensureMemberInactiveSinceColumn();
 
 $canManageMembers = isAdmin() || staffHasPermission('members.edit');
 $courseOptions = getMemberCourseOptions();
+$yearLevelOptions = getMemberYearLevelOptions();
 $canAddMembers = isStaff() && staffHasPermission('members.add');
 
 // Process form submissions
@@ -160,6 +162,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $barcode = $_POST['barcode'] ?? '';
     $studentId = trim($_POST['student_id'] ?? '');
     $course = trim($_POST['course'] ?? '');
+    $yearLevel = trim($_POST['year_level'] ?? '');
+    if ($yearLevel !== '' && !array_key_exists($yearLevel, $yearLevelOptions)) {
+        $yearLevel = '';
+    }
+    $yearLevelToSave = $yearLevel !== '' ? $yearLevel : null;
     $notifications_enabled = isset($_POST['notifications_enabled']) ? 1 : 0;
     $isEdit = isset($_POST['id']) && !empty($_POST['id']);
     // Status is controlled by the system (auto-inactive/reactivation), not manually editable here.
@@ -231,7 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_sql = "
                     UPDATE members 
                     SET fullname = :fullname, email = :email, phone = :phone, 
-                        address = :address, course = :course, student_id = :student_id, status = :status, barcode = :barcode, 
+                        address = :address, course = :course, student_id = :student_id, year_level = :year_level, status = :status, barcode = :barcode, 
                         notifications_enabled = :notifications_enabled
                 ";
                 
@@ -249,6 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bindParam(':address', $address);
                 $stmt->bindParam(':course', $course);
                 $stmt->bindParam(':student_id', $studentIdToSave);
+                $stmt->bindParam(':year_level', $yearLevelToSave);
                 $stmt->bindParam(':status', $memberStatus);
                 $stmt->bindParam(':barcode', $barcode);
                 $stmt->bindParam(':notifications_enabled', $notifications_enabled);
@@ -270,8 +278,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Add new member
                 $stmt = $pdo->prepare("
-                    INSERT INTO members (fullname, email, phone, address, course, student_id, status, barcode, photo_path, notifications_enabled)
-                    VALUES (:fullname, :email, :phone, :address, :course, :student_id, :status, :barcode, :photo_path, :notifications_enabled)
+                    INSERT INTO members (fullname, email, phone, address, course, student_id, year_level, status, barcode, photo_path, notifications_enabled)
+                    VALUES (:fullname, :email, :phone, :address, :course, :student_id, :year_level, :status, :barcode, :photo_path, :notifications_enabled)
                 ");
                 $stmt->bindParam(':fullname', $fullname);
                 $stmt->bindParam(':email', $email);
@@ -279,6 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bindParam(':address', $address);
                 $stmt->bindParam(':course', $course);
                 $stmt->bindParam(':student_id', $studentIdToSave);
+                $stmt->bindParam(':year_level', $yearLevelToSave);
                 $stmt->bindParam(':status', $memberStatus);
                 $stmt->bindParam(':barcode', $barcode);
                 $stmt->bindParam(':photo_path', $photo_path);
@@ -434,15 +443,31 @@ include 'includes/header.php';
                 </div>
 
                 <div>
-                    <label for="course" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Course *</label>
+                    <label for="course" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Department / Course *</label>
                     <select id="course" name="course" required
                             class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
-                        <option value="">Select a course</option>
+                        <option value="">Select department / course</option>
                         <?php
                         $selectedCourse = ($memberData && !empty($memberData['course'])) ? $memberData['course'] : '';
                         foreach ($courseOptions as $code => $label):
                         ?>
                             <option value="<?php echo htmlspecialchars($code); ?>" <?php echo ($selectedCourse === $code) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($label); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="year_level" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year Level</label>
+                    <select id="year_level" name="year_level"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                        <option value="">Select year level</option>
+                        <?php
+                        $selectedYear = ($memberData && !empty($memberData['year_level'])) ? $memberData['year_level'] : '';
+                        foreach ($yearLevelOptions as $code => $label):
+                        ?>
+                            <option value="<?php echo htmlspecialchars($code); ?>" <?php echo ($selectedYear === $code) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($label); ?>
                             </option>
                         <?php endforeach; ?>
@@ -577,12 +602,11 @@ include 'includes/header.php';
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Member</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Contact</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Student ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Course</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Department</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Year</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Join Date</th>
-                        <?php if ($canManageMembers || staffHasPermission('transactions.view')): ?>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"><?php echo $canManageMembers ? 'Actions' : 'History'; ?></th>
-                        <?php endif; ?>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -616,6 +640,9 @@ include 'includes/header.php';
                                     echo htmlspecialchars($courseOptions[$memberCourse] ?? ($memberCourse ?: '-'));
                                     ?>
                                 </td>
+                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                    <?php echo htmlspecialchars(getMemberYearLevelLabel($member['year_level'] ?? '')); ?>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <?php
                                     $memberStatus = $member['status'] ?? 'active';
@@ -638,19 +665,18 @@ include 'includes/header.php';
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                     <?php echo date('M j, Y', strtotime($member['created_at'])); ?>
                                 </td>
-                                <td class="px-6 py-4 text-right text-sm">
-                                    <?php if (!$canManageMembers && staffHasPermission('transactions.view')): ?>
-                                    <a href="transactions.php?search=<?php echo urlencode($member['fullname']); ?>" class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300" title="View borrow & return history">
+                                <td class="px-6 py-4 text-right text-sm whitespace-nowrap">
+                                    <a href="member_history.php?id=<?php echo (int) $member['id']; ?>" class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 mr-3" title="Borrower profile & transaction history">
                                         <i class="fas fa-history mr-1"></i> History
                                     </a>
-                                    <?php elseif ($canManageMembers): ?>
-                                    <a href="members.php?action=print_barcode&id=<?php echo $member['id']; ?>" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 mr-3">
+                                    <?php if ($canManageMembers): ?>
+                                    <a href="members.php?action=print_barcode&id=<?php echo $member['id']; ?>" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 mr-3" title="Print barcode">
                                         <i class="fas fa-print"></i>
                                     </a>
-                                    <a href="members.php?action=edit&id=<?php echo $member['id']; ?>" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
+                                    <a href="members.php?action=edit&id=<?php echo $member['id']; ?>" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="javascript:void(0);" onclick="confirmDelete(<?php echo $member['id']; ?>, '<?php echo htmlspecialchars(addslashes($member['fullname'])); ?>')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                    <a href="javascript:void(0);" onclick="confirmDelete(<?php echo $member['id']; ?>, '<?php echo htmlspecialchars(addslashes($member['fullname'])); ?>')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                     <?php endif; ?>
@@ -659,7 +685,7 @@ include 'includes/header.php';
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="<?php echo ($canManageMembers || staffHasPermission('transactions.view')) ? '7' : '6'; ?>" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No members found. Add a member to get started.</td>
+                            <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No members found. Add a member to get started.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

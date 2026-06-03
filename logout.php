@@ -1,16 +1,16 @@
 <?php
-// Start session if not already started
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
+require_once 'config/functions.php';
+
+$timedOut = isset($_GET['timeout']) && $_GET['timeout'] === '1';
+
+$_SESSION = [];
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_destroy();
 }
 
-// Clear all session variables
-$_SESSION = array();
-
-// Destroy the session
-session_destroy();
-
-// Redirect to login page
-header('Location: login.php');
-exit;
-?> 
+if ($timedOut) {
+    header('Location: login.php?reason=session_expired');
+} else {
+    header('Location: login.php');
+}
+exit; 

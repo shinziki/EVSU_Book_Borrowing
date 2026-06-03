@@ -9,6 +9,11 @@ if (isset($_SESSION['admin_id']) && isset($_SESSION['admin_authenticated']) && $
 }
 
 $error = '';
+if (($_GET['reason'] ?? '') === 'session_expired') {
+    $error = 'Your session expired due to 1 hour of inactivity. Please sign in again.';
+} elseif (($_GET['reason'] ?? '') === 'account_inactive') {
+    $error = 'This staff account has been deactivated. Contact an administrator to reactivate it.';
+}
 
 // Process login form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -46,10 +51,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($passwordMatch) {
                 ensureAdminRoleColumn();
+                ensureAdminStatusColumn();
                 $role = $user['role'] ?? 'admin';
                 if (!in_array($role, ['admin', 'staff'], true)) {
                     $role = 'admin';
                 }
+
+                if ($role === 'staff' && !isAdminAccountActive($user)) {
+                    $error = 'This staff account has been deactivated. Contact an administrator to reactivate it.';
+                } else {
 
                 // Directly login the user - No 2FA
                 $_SESSION['admin_id'] = $user['id'];
@@ -57,6 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['admin_username'] = $user['username'];
                 $_SESSION['admin_role'] = $role;
                 $_SESSION['admin_fullname'] = $user['fullname'] ?? $user['username'];
+                if ($role === 'staff') {
+                    $_SESSION['last_activity'] = time();
+                }
                 
                 // Log successful login
                 try {
@@ -72,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 header('Location: ' . getDefaultLandingPage());
                 exit;
+                }
             } else {
                 $error = 'Invalid username or password';
             }

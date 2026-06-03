@@ -8,6 +8,9 @@ if (session_status() == PHP_SESSION_NONE) {
 define('APP_TIMEZONE', 'Asia/Manila');
 date_default_timezone_set(APP_TIMEZONE);
 
+/** Staff session idle timeout (seconds) — auto logout after no interaction */
+define('STAFF_SESSION_IDLE_SECONDS', 3600);
+
 /**
  * Philippine timezone for DateTime operations.
  */
@@ -50,9 +53,74 @@ function ensureAdminRoleColumn() {
             $pdo->exec("ALTER TABLE admins ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'admin' AFTER email");
             $pdo->exec("UPDATE admins SET role = 'admin' WHERE role = '' OR role IS NULL");
         }
+        ensureAdminStatusColumn();
     } catch (PDOException $e) {
         error_log('ensureAdminRoleColumn: ' . $e->getMessage());
     }
+}
+
+/**
+ * Ensure admins.status column exists (active | inactive) for staff login control.
+ */
+function ensureAdminStatusColumn() {
+    global $pdo;
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+    try {
+        $stmt = $pdo->query("SHOW COLUMNS FROM admins LIKE 'status'");
+        if ($stmt->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE admins ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active' AFTER role");
+            $pdo->exec("UPDATE admins SET status = 'active' WHERE status = '' OR status IS NULL");
+        }
+    } catch (PDOException $e) {
+        error_log('ensureAdminStatusColumn: ' . $e->getMessage());
+    }
+}
+
+function normalizeAdminAccountStatus(?string $status): string {
+    return strtolower(trim((string) $status)) === 'inactive' ? 'inactive' : 'active';
+}
+
+function isAdminAccountActive(array $admin): bool {
+    return normalizeAdminAccountStatus($admin['status'] ?? 'active') === 'active';
+}
+
+/**
+ * Block login / end session for deactivated staff accounts.
+ */
+function enforceActiveStaffAccountAccess(): void {
+    if (!isLoggedIn()) {
+        return;
+    }
+
+    ensureAdminStatusColumn();
+    global $pdo;
+
+    try {
+        $stmt = $pdo->prepare("SELECT role, status FROM admins WHERE id = ? LIMIT 1");
+        $stmt->execute([(int) $_SESSION['admin_id']]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return;
+    }
+
+    if (!$row || ($row['role'] ?? '') !== 'staff') {
+        return;
+    }
+
+    if (isAdminAccountActive($row)) {
+        return;
+    }
+
+    $_SESSION = [];
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+    header('Location: login.php?reason=account_inactive');
+    exit;
 }
 
 /**
@@ -117,6 +185,26 @@ function ensureMemberStudentIdColumn() {
         }
     } catch (PDOException $e) {
         error_log('ensureMemberStudentIdColumn: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Ensure members.year_level column exists.
+ */
+function ensureMemberYearLevelColumn() {
+    global $pdo;
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+    try {
+        $stmt = $pdo->query("SHOW COLUMNS FROM members LIKE 'year_level'");
+        if ($stmt->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE members ADD COLUMN year_level VARCHAR(30) DEFAULT NULL AFTER student_id");
+        }
+    } catch (PDOException $e) {
+        error_log('ensureMemberYearLevelColumn: ' . $e->getMessage());
     }
 }
 
@@ -300,6 +388,93 @@ function isMemberActive($member) {
     return ($member['status'] ?? 'active') === 'active';
 }
 
+function getMemberYearLevelOptions() {
+    return [
+        '1st Year' => '1st Year',
+        '2nd Year' => '2nd Year',
+        '3rd Year' => '3rd Year',
+        '4th Year' => '4th Year',
+        '5th Year' => '5th Year',
+        'Graduate' => 'Graduate',
+    ];
+}
+
+function getMemberDepartmentLabel(?string $courseCode): string {
+    if ($courseCode === null || trim($courseCode) === '') {
+        return '-';
+    }
+    $options = getMemberCourseOptions();
+    return $options[$courseCode] ?? $courseCode;
+}
+
+function getMemberYearLevelLabel(?string $yearLevel): string {
+    if ($yearLevel === null || trim($yearLevel) === '') {
+        return '-';
+    }
+    $options = getMemberYearLevelOptions();
+    return $options[$yearLevel] ?? $yearLevel;
+}
+
+/**
+ * @return array<string, mixed>|null
+ */
+function getMemberById(int $memberId): ?array {
+    global $pdo;
+    ensureMemberCourseColumn();
+    ensureMemberStudentIdColumn();
+    ensureMemberYearLevelColumn();
+    ensureMemberStatusColumn();
+    ensureMemberInactiveSinceColumn();
+
+    $stmt = $pdo->prepare('SELECT * FROM members WHERE id = ? LIMIT 1');
+    $stmt->execute([$memberId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $row ?: null;
+}
+
+/**
+ * @return array<int, array<string, mixed>>
+ */
+function getMemberBorrowingHistory(int $memberId, ?string $statusFilter = null): array {
+    global $pdo;
+
+    $sql = "
+        SELECT t.id, t.borrow_date, t.due_date, t.return_date, t.status,
+               t.payment_amount, t.payment_status, t.penalty_amount, t.penalty_type,
+               b.title AS book_title, b.author AS book_author, b.barcode AS book_barcode
+        FROM transactions t
+        JOIN books b ON t.book_id = b.id
+        WHERE t.member_id = :member_id
+    ";
+    $params = [':member_id' => $memberId];
+
+    if ($statusFilter !== null && $statusFilter !== '' && $statusFilter !== 'all') {
+        $sql .= ' AND t.status = :status';
+        $params[':status'] = $statusFilter;
+    }
+
+    $sql .= ' ORDER BY t.borrow_date DESC, t.id DESC';
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function renderTransactionStatusBadge(string $status): string {
+    $classes = [
+        'Borrowed' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+        'Returned' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+        'Overdue' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+        'Needs Replacement' => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    ];
+    $class = $classes[$status] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    $label = htmlspecialchars($status);
+
+    return '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full ' . $class . '">' . $label . '</span>';
+}
+
 function getMemberCourseOptions() {
     return [
         'BSIT' => 'BSIT - Bachelor of Science in Information Technology',
@@ -376,6 +551,45 @@ function getMemberEmailValidationError(string $usernameInput): ?string {
  */
 function isLoggedIn() {
     return isset($_SESSION['admin_id']) && isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true;
+}
+
+/**
+ * Pages that should not extend staff idle session (background polling only).
+ */
+function isStaffSessionIdleExemptPage(): bool {
+    $page = basename($_SERVER['PHP_SELF'] ?? '');
+    return in_array($page, ['notifications_feed.php'], true);
+}
+
+/**
+ * Log out staff after STAFF_SESSION_IDLE_SECONDS without interaction.
+ */
+function enforceStaffSessionIdleTimeout(): void {
+    if (!isLoggedIn() || !isStaff()) {
+        return;
+    }
+
+    $now = time();
+    $timeout = (int) STAFF_SESSION_IDLE_SECONDS;
+
+    if (!isset($_SESSION['last_activity'])) {
+        $_SESSION['last_activity'] = $now;
+        return;
+    }
+
+    $idleSeconds = $now - (int) $_SESSION['last_activity'];
+    if ($idleSeconds > $timeout) {
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
+        header('Location: login.php?reason=session_expired');
+        exit;
+    }
+
+    if (!isStaffSessionIdleExemptPage()) {
+        $_SESSION['last_activity'] = $now;
+    }
 }
 
 /**
@@ -532,6 +746,7 @@ function getDefaultStaffPermissionKeys() {
 function getPagePermissionMap() {
     return [
         'index.php' => null,
+        'download_backup.php' => 'settings.profile',
         'dashboard.php' => 'dashboard.view',
         'book_metrics.php' => ['metrics.view', 'dashboard.view'],
         'books.php' => 'books.view',
@@ -540,6 +755,7 @@ function getPagePermissionMap() {
         'borrow_receipt.php' => 'borrow.process',
         'transactions.php' => 'transactions.view',
         'members.php' => 'members.view',
+        'member_history.php' => 'members.view',
         'settings.php' => 'settings.profile',
         'check_member_borrows.php' => 'borrow.process',
         'penalties.php' => 'penalties.view',
@@ -729,6 +945,8 @@ function requireLogin() {
         header('Location: login.php');
         exit;
     }
+    enforceStaffSessionIdleTimeout();
+    enforceActiveStaffAccountAccess();
     ensureAdminRoleColumn();
     // Housekeeping: auto-inactivate members with no borrow in last 1 month
     autoInactivateMembersWithoutRecentBorrowMonths(1);

@@ -2,6 +2,31 @@
 
 A barcode-based library management system for EVSU Book Borrowing System.
 
+## Database backup
+
+Full database backups use the filename pattern **`backup_YYYY-MM-DD.sql`** (for example, `backup_2026-06-02.sql`) and are stored in `backups/database/`.
+
+### Manual backup (admin)
+
+1. Sign in as **admin** → **Settings** → **Database Backup**
+2. Click **Create Backup Now**, or export from **phpMyAdmin** using the same naming pattern
+
+### Daily scheduled backup
+
+Run once per day via cron or Windows Task Scheduler:
+
+```bash
+# Linux / macOS (2:00 AM daily)
+0 2 * * * /usr/bin/php /path/to/EVSU_Book_Borrowing/scripts/daily_database_backup.php
+```
+
+```text
+# Windows Task Scheduler (XAMPP)
+C:\xampp\php\php.exe C:\xampp\htdocs\EVSU_Book_Borrowing\scripts\daily_database_backup.php
+```
+
+Runs are logged to `logs/database_backup.log`. Admins can download backups from **Settings → Database Backup**.
+
 ## Features
 
 - Book management with barcode scanning
